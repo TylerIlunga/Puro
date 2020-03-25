@@ -1,0 +1,10 @@
+.DS_STORE
+api/.DS_STORE
+api/node_modules
+api/package-lock.json
+web/.DS_Store
+web/node_modules
+web/yarn.lock
+web/build
+web/.pnp
+web/.pnp.js
