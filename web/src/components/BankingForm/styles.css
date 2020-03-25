@@ -1,0 +1,17 @@
+.cc-form-element {
+  color: white;
+  border-bottom: 1px solid white;
+  padding-bottom: 5px;
+}
+
+.success-text {
+  font-size: 25px;
+  color: #00ff00;
+  font-weight: bold;
+}
+
+.error-text {
+  font-size: 25px;
+  color: #ff0000;
+  font-weight: bold;
+}

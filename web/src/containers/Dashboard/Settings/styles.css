@@ -1,0 +1,26 @@
+.settings-container {
+  background: white;
+  border: 1px solid white;
+  border-radius: 25px;
+  overflow-y: scroll;
+}
+
+.header-label {
+  font-size: 44px;
+  font-weight: bold;
+  background: -webkit-linear-gradient(320deg, #fc466b 0%, #3f5efb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.success-text {
+  font-size: 25px;
+  color: #00ff00;
+  font-weight: bold;
+}
+
+.error-text {
+  font-size: 25px;
+  color: #ff0000;
+  font-weight: bold;
+}

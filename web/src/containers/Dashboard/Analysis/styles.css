@@ -1,0 +1,19 @@
+.analysis-container {
+  background: white;
+  border: 1px solid white;
+  border-radius: 25px;
+  overflow-y: scroll;
+  width: 100%;
+}
+
+.header-label {
+  font-size: 44px;
+  font-weight: bold;
+  background: -webkit-linear-gradient(320deg, #fc466b 0%, #3f5efb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.info-card {
+  text-align: center;
+}
