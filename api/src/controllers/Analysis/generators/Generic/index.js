@@ -1,31 +1,4 @@
-const generatePoints = dataset => {
-  let points = [];
-  if (Array.isArray(dataset)) {
-    if (dataset.length === 0) {
-      return 0;
-    }
-    dataset.forEach(set => {
-      Object.keys(set).forEach(key => {
-        points.push({
-          x: key,
-          y: set[key],
-        });
-      });
-    });
-    return points;
-  }
-  const datasetKeys = Object.keys(dataset);
-  if (datasetKeys.length === 0) {
-    return 0;
-  }
-  datasetKeys.forEach(key => {
-    points.push({
-      x: key,
-      y: dataset[key],
-    });
-  });
-  return points;
-};
+const { generatePieChartData } = require('../../config');
 
 module.exports = {
   generateHistoricalDataDataset(historialData) {
@@ -41,27 +14,27 @@ module.exports = {
     return count;
   },
   generateCompaniesDataset(companies) {
-    return generatePoints(companies);
+    return generatePieChartData(companies);
   },
   generateEmailsDataset(emails) {
-    return generatePoints(emails);
+    return generatePieChartData(emails);
   },
   generateUsernamesDataset(usernames) {
-    return generatePoints(usernames);
+    return generatePieChartData(usernames);
   },
   generateCountriesDataset(countries) {
-    return generatePoints(countries);
+    return generatePieChartData(countries);
   },
   generateCountryCodesDataset(countryCodes) {
-    return generatePoints(countryCodes);
+    return generatePieChartData(countryCodes);
   },
   generateSoftwareDataset(software) {
-    return generatePoints(software);
+    return generatePieChartData(software);
   },
   generateSoftwareVersionsDataset(versions) {
-    return generatePoints(versions);
+    return generatePieChartData(versions);
   },
   generateOperatingSystemsDataset(operatingSystems) {
-    return generatePoints(operatingSystems);
+    return generatePieChartData(operatingSystems);
   },
 };

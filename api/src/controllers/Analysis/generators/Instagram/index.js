@@ -1,28 +1,27 @@
 const { generatorPipeline } = require('../../config');
-// NOTE: check data from instagram after logging in.
 module.exports = {
   generateFullNameDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateBioDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateMediaDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateFollowsDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateFollowedByDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateIsBusinessDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfilePictureDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateWebsiteDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
 };

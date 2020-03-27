@@ -1,27 +1,27 @@
 const { generatorPipeline } = require('../../config');
 module.exports = {
   generateEmailDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateNameDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateFamilyNameDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateGivenNameDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateLinkDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateLocaleDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generatePictureDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateVerifiedEmailDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
 };

@@ -1,33 +1,33 @@
 const { generatorPipeline } = require('../../config');
 module.exports = {
   generateNameDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateBirthdateDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateCountryDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfileDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateFollowersDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProductDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generatePremiumAccountDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateTypeDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateTopArtistDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateLinkDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
 };

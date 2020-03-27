@@ -1,132 +1,132 @@
 const { generatorPipeline } = require('../../config');
 module.exports = {
   generateNameDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateScreenNameDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateDescriptionDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateVerifiedDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProtectedDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateSuspendedDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateStatusesCountDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateFavouritesCountDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateFollowRequestSentDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateFollowersCountDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateFollowingDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateFriendsCountDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateLangDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateLocationDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateAccountCreationDateDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateContributorsEnabledDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateDefaultProfileDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateDefaultProfileImageDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateGeoEnabledDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateHasExtendedProfileDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateIsTranslationEnabledDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateIsTranslatorDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateListedCountDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateNeedsPhoneVerificationDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateNotificationsDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfileBackgroundColorDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfileBackgroundTileDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfileLinkColorDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfileSidebarBorderColorDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfileSidebarFillColorDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfileTextColorDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfileUseBackgroundImageDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateTimeZoneDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateTranslatorTypeDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateUtcOffsetDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateLinkDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateUrlDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateDescriptionUrlDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfileBackgroundImageUrlDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfileBackgroundImageUrlHttpsDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfileBannerUrlDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfileImageUrlDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
   generateProfileImageUrlHttpsDataset(dataset) {
-    return dataset;
+    return generatorPipeline(dataset, null);
   },
 };

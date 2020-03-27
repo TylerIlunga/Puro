@@ -31,11 +31,10 @@ const generateLineChartData = (dataset, label) => {
   if (!dataset.createdAt) {
     return { x: label, y: dataset };
   }
-  let lineChartPoint = {
+  return {
+    [label]: dataset,
     created_at: dataset.createdAt,
   };
-  lineChartPoint[label] = dataset;
-  return lineChartPoint;
 };
 
 const organizeDataset = (dataset, key) => {
@@ -52,8 +51,12 @@ const organizeDataset = (dataset, key) => {
 };
 
 module.exports = {
+  generatePieChartData,
+  generateLineChartData,
   generatorPipeline(dataset, key) {
-    if (dataset === null) return dataset;
+    if (dataset === null || key === null) {
+      return dataset;
+    }
     return organizeDataset(dataset, key);
   },
 };
