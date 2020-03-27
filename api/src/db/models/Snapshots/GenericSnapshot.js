@@ -1,5 +1,4 @@
 const Sequelize = require('sequelize');
-
 const options = {
   freezeTableName: true,
   timestamps: false,
@@ -11,6 +10,8 @@ const options = {
   },
 };
 
+// NOTE: Apache Cassandra or a service such as Amazon Redshift
+// maybe better than using PostgreSQL for Snapshot storage.
 module.exports = sequelize => {
   let GenericSnapshot = sequelize.define(
     'generic_snapshot',

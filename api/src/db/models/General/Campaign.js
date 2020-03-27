@@ -1,6 +1,5 @@
 const Sequelize = require('sequelize');
 const { base } = require('../../../config');
-
 const options = {
   freezeTableName: true,
   timestamps: false,
@@ -15,6 +14,12 @@ const options = {
       });
     },
   },
+  indexes: [
+    {
+      unique: false,
+      fields: ['pid'],
+    },
+  ],
 };
 
 // NOTE: only admins can update the link

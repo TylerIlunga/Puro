@@ -6,7 +6,7 @@
  *  Description   :  Module that initializes the database and
  *                   it's models for operations.
  *
- *  Notes         :  3
+ *  Notes         :  0
  *  Warnings      :  None
  *  Exceptions    :  N/A
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -14,7 +14,6 @@
 const Sequelize = require('sequelize');
 const { dbConfig } = require('./config');
 
-//db should have a hash password for prod
 const sequelize = new Sequelize(
   dbConfig.database,
   dbConfig.user,
@@ -25,7 +24,7 @@ const sequelize = new Sequelize(
     password: dbConfig.password,
     dialect: dbConfig.dialect,
     pool: dbConfig.pool,
-    logging: false, // NOTE: only "false" for testing
+    logging: false,
   },
 );
 

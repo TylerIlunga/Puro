@@ -1,5 +1,4 @@
 const Sequelize = require('sequelize');
-
 const options = {
   freezeTableName: true,
   timestamps: false,
@@ -11,10 +10,12 @@ const options = {
   },
 };
 
-//** Will change to log revelent information from the Github_Analysis Table */
+/** Persist revelent information from the Github_Analysis Table **/
+// NOTE: Apache Cassandra or a service such as Amazon Redshift
+// maybe better than using PostgreSQL for Snapshot storage.
 module.exports = sequelize => {
   let GithubSnapshot = sequelize.define(
-    'github_snapshot' /** CHANGE */,
+    'github_snapshot',
     {
       campaigns: {
         type: Sequelize.BIGINT,

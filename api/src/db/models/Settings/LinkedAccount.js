@@ -1,5 +1,4 @@
 const Sequelize = require('sequelize');
-
 const options = {
   freezeTableName: true,
   timestamps: false,

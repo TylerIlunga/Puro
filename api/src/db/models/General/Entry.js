@@ -1,5 +1,4 @@
 const Sequelize = require('sequelize');
-
 const options = {
   freezeTableName: true,
   timestamps: false,
@@ -9,6 +8,12 @@ const options = {
     beforeCreate(user, options) {},
     afterCreate(user, options) {},
   },
+  indexes: [
+    {
+      unique: false,
+      fields: ['company_id'],
+    },
+  ],
 };
 
 module.exports = sequelize => {

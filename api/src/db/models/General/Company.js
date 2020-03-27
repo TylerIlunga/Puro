@@ -1,5 +1,4 @@
 const Sequelize = require('sequelize');
-
 const options = {
   freezeTableName: true,
   timestamps: false,
@@ -41,10 +40,7 @@ module.exports = sequelize => {
     options,
   );
 
-  Company.associate = models => {
-    // Company.belongsToMany(models.Campaign, {as: 'company', through: 'user_dsps', foreignKey: 'dsp_id'});
-    // Company.belongsToMany(models.Campaign, {as: 'company', foreignKey: 'company_id'});
-  };
+  Company.associate = models => {};
 
   return Company;
 };

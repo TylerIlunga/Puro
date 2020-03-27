@@ -11,10 +11,12 @@ const options = {
   },
 };
 
-//** Will change to log revelent information from the Twitter_Analysis Table */
+//** Persist revelent information from the Twitter_Analysis Table */
+// NOTE: Apache Cassandra or a service such as Amazon Redshift
+// maybe better than using PostgreSQL for Snapshot storage.
 module.exports = sequelize => {
   let TwitterSnapshot = sequelize.define(
-    'twitter_snapshot' /** CHANGE */,
+    'twitter_snapshot',
     {
       campaigns: {
         type: Sequelize.BIGINT,
