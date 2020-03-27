@@ -1,7 +1,4 @@
 const Sequelize = require('sequelize');
-
-//NOTE: different analysis tables per company?? probably
-
 const options = {
   freezeTableName: true,
   timestamps: false,

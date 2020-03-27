@@ -1,5 +1,4 @@
 const Sequelize = require('sequelize');
-
 const options = {
   freezeTableName: true,
   timestamps: false,
@@ -11,9 +10,9 @@ const options = {
   },
 };
 
-// NOTE: "users can edit token scopes after the OAuth flow is completed.
+// NOTE: Users can edit token scopes after the OAuth flow is completed.
 // You should be aware of this possibility and adjust your application's
-// behavior accordingly.
+// behavior accordingly...
 
 // Data table feature structure:
 // IDs ==> Tokens ==> Personal ==> Technical
