@@ -5,7 +5,7 @@
  *  Date          :  2020-03-25
  *  Description   :  Module that holds all of the services for "Analysis".
  *                   Includes the following:
- *                   handleUpdatingMap()
+ *                   aggregateValueForMap()
  *                   getEntriesForCampaign()
  *                   getTopCompanies()
  *                   getHistoricalData()
@@ -20,7 +20,7 @@
  *                   general()
  *                   fetch()
  *
- *  Notes         :  1
+ *  Notes         :  3
  *  Warnings      :  None
  *  Exceptions    :  N/A
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -54,20 +54,18 @@ const analyticalOptions = {
 };
 
 /**
- * handleUpdatingMap
- * Purpose: Updates generic Map.
- * @param {Object} obj
+ * Aggregates the given key for the given map.
+ * @param {Object} map
  * @param {string} key
  * @return {Object}
  */
-const handleUpdatingMap = (obj, key) => {
-  obj[key] === undefined ? (obj[key] = 1) : obj[key]++;
-  return obj;
+const aggregateValueForMap = (map, key) => {
+  map[key] === undefined ? (map[key] = 1) : map[key]++;
+  return map;
 };
 
 /**
- * getEntriesForCampaign
- * Purpose: Updates generic Map.
+ * Finds all entries for a given campaign via it's ID
  * @param {string} campaign_id
  * @return {Promise<[Object]>}
  */
@@ -80,8 +78,7 @@ const getEntriesForCampaign = campaign_id => {
 };
 
 /**
- * getTopCompanies
- * Purpose: Gathers the top five companies from the
+ * Gathers the top five companies
  * from the current user's campaigns.
  * @param {Object} campaign
  * @param {Object} topCompanies
@@ -90,37 +87,32 @@ const getTopCompanies = (campaign, topCompanies) => {
   if (Object.keys(topCompanies).length > 4) {
     return;
   }
-  //console.log(topCompanies[campaign.company]);
-  handleUpdatingMap(topCompanies, campaign.company);
+  aggregateValueForMap(topCompanies, campaign.company);
 };
 
 /**
- * getGenericSnapshots
- * Purpose: Gathers all Generic Snapshots for seed
- * plan accounts.
- * @param {Object} snapshot
+ * Gathers all Generic Snapshots for "seed" accounts.
+ * @param {Promise<[Object]>} snapshot
  */
 const getGenericSnapshots = snapshot => {
   return GenericSnapshot.findAll({
     where: { id: snapshot.dataValues.gs_id },
   })
     .then(gSnapshots => {
-      // console.log('getHistoricalData() gSnapshots', gSnapshots);
       if (!gSnapshots) {
         return [];
       }
       return gSnapshots;
     })
     .catch(error => {
-      console.log('getHistoricalData() GenericSnapshot.findAll() error', error);
+      console.log('GenericSnapshot.findAll() error', error);
       return [];
     });
 };
 
 /**
- * getHistoricalData
- * Purpose: Gathers all the current's user snapshots of previous
- * information logged. (Primarily totals for now.)
+ * Gathers all snapshot data for a given user.
+ * (Primarily totals...)
  * @param {string} userId
  * @return {Promise}
  */
@@ -137,13 +129,11 @@ const getHistoricalData = userId => {
       });
       return Promise.all(promises)
         .then(results => {
-          // console.log('results:', results);
           if (results.length === 0) {
             return [];
           }
           return results.map(gSnapshot => {
             gSnapshot = gSnapshot[0].dataValues;
-            console.log('gSnapshot:', gSnapshot);
             return {
               campaigns: gSnapshot.campaigns,
               clicks: gSnapshot.clicks,
@@ -163,9 +153,7 @@ const getHistoricalData = userId => {
 };
 
 /**
- * collectUsernames
- * Purpose: Collects the top usernames from the current
- * user's campaigns.
+ * Collects the top usernames from the current user's campaigns.
  * @param {[string]} usersname
  * @param {string} entryUsername
  * @return {[string]}
@@ -175,17 +163,14 @@ const collectUsernames = (usernames, entryUsername) => {
     return usernames;
   }
   let usernameMap = {};
-  //console.log('entryUsername', entryUsername);
   if (usernames.length < 5) {
-    usernames.push(handleUpdatingMap(usernameMap, entryUsername));
+    usernames.push(aggregateValueForMap(usernameMap, entryUsername));
   }
   return usernames;
 };
 
 /**
- * collectEmails
- * Purpose: Collects the top emails from the current
- * user's campaigns.
+ * Collects the top emails from the current user's campaigns.
  * @param {[string]} emails
  * @param {string} entryEmail
  * @return {[string]}
@@ -195,17 +180,15 @@ const collectEmails = (emails, entryEmail) => {
     return emails;
   }
   let emailsMap = {};
-  // console.log('entryEmail', entryEmail);
   if (emails.length < 5) {
-    emails.push(handleUpdatingMap(emailsMap, entryEmail));
+    emails.push(aggregateValueForMap(emailsMap, entryEmail));
   }
   return emails;
 };
 
 /**
- * collectTotalClicks
- * Purpose: Collects the total amount of clicks from
- * the current user's campaigns.
+ * Collects the total amount of clicks
+ * generated from the current user's campaigns.
  * @param {Number} clicks
  * @param {Number} entryClickAmount
  * @return {Number}
@@ -216,9 +199,8 @@ const collectTotalClicks = (clicks, entryClickAmount) => {
 };
 
 /**
- * collectBasicAnalysisData
- * Purpose: Collects analytical data from a current entry
- * based on the company specified in the campaign.
+ * Collects very basic analytical data from a current
+ * entry based on the company specified in the campaign.
  * @param {Object} entry
  * @param {[Object]} companies
  * @return {[Promise<[Object]>]}
@@ -226,7 +208,6 @@ const collectTotalClicks = (clicks, entryClickAmount) => {
 const collectBasicAnalysisData = (entry, companies) => {
   let promises = [];
   Object.keys(companies).forEach(company => {
-    //  console.log('entry:::::', entry.id, entry.campaign_id);
     promises.push(
       analyticalOptions[company].findOne({
         where: {
@@ -242,9 +223,7 @@ const collectBasicAnalysisData = (entry, companies) => {
 };
 
 /**
- * organizeBasicAnalysisData
- * Purpose: Organizes the gathered analytical data into
- * famailar data structures.
+ * Organizes the gathered analytical data into famailar data structures.
  * @param {Object} basicAnalysisData
  * @return {Object}
  */
@@ -263,22 +242,25 @@ const organizeBasicAnalysisData = basicAnalysisData => {
 
   basicAnalysisData.forEach(analysis => {
     if (analysis.country_name !== null) {
-      countriesMap = handleUpdatingMap(countriesMap, analysis.country_name);
+      countriesMap = aggregateValueForMap(countriesMap, analysis.country_name);
     }
     if (countryCodes.length < 5 && analysis.country_code !== null) {
-      countryCodesMap = handleUpdatingMap(
+      countryCodesMap = aggregateValueForMap(
         countryCodesMap,
         analysis.country_code,
       );
     }
     if (software.length < 5 && analysis.software_name !== null) {
-      softwareMap = handleUpdatingMap(softwareMap, analysis.software_name);
+      softwareMap = aggregateValueForMap(softwareMap, analysis.software_name);
     }
     if (versions.length < 5 && analysis.software_version !== null) {
-      versionsMap = handleUpdatingMap(versionsMap, analysis.software_version);
+      versionsMap = aggregateValueForMap(
+        versionsMap,
+        analysis.software_version,
+      );
     }
     if (operatingSystems.length < 5 && analysis.operating_system !== null) {
-      operatingSystemsMap = handleUpdatingMap(
+      operatingSystemsMap = aggregateValueForMap(
         operatingSystemsMap,
         analysis.operating_system,
       );
@@ -303,9 +285,8 @@ const organizeBasicAnalysisData = basicAnalysisData => {
 };
 
 /**
- * handleBasicEntryDataGathering
- * Purpose: Gathers, organizes, and ships basic analytical data for
- * all entries that the current user obtains.
+ * Gathers, organizes, and ships basic analytical data
+ * from all entries associated to current user's campaigns.
  * @param {[Object]} entries
  * @param {Array} companies
  */
@@ -326,11 +307,11 @@ const handleBasicEntryDataGathering = (entries, companies) => {
       .then(results => {
         if (results.length > 0) {
           results.forEach(result => {
-            // console.log('Promise.all() Promise.all', result);
-            if (result !== null) basicAnalysisData.push(result);
+            if (result !== null) {
+              basicAnalysisData.push(result);
+            }
           });
         }
-
         resolve({
           clicks,
           emails,
@@ -349,16 +330,14 @@ const handleBasicEntryDataGathering = (entries, companies) => {
 };
 
 /**
- * generateDataset
- * Purpose: Generates a dataset based on the type of data
- * structure passed as an argument.
+ * Generates a dataset needed for graphs
+ * relative to the data type passed as an argument.
  * @param {string} generator
  * @param {string} type
  * @param {Object} data
  * @return {Object}
  */
 const generateDataset = (generator, type, data) => {
-  // console.log(`distributeDatasetGeneration() generate${type}Dataset`);
   switch (generator) {
     case 'generic':
       return Generic[`generate${type}Dataset`]
@@ -388,14 +367,14 @@ const generateDataset = (generator, type, data) => {
       return Twitter[`generate${type}Dataset`]
         ? Twitter[`generate${type}Dataset`](data)
         : null;
+    default:
+      return null;
   }
-  // return generator.charAt(0).toUpperCase()[`generate${type}Dataset`](data);
 };
 
 /**
- * handleSeedAnalysis
- * Purpose: Handles data gathering/analysis for user's
- * with only the "Seed" plan.
+ * Handles data gathering/analysis for
+ * user's subscribed to the "Seed" plan.
  * @param {string} userId
  * @param {[Object]} campaigns
  * @return {Promise<Object>}
@@ -411,13 +390,12 @@ const handleSeedAnalysis = async (userId, campaigns) => {
     promises.push(getHistoricalData(userId));
     Promise.all(promises)
       .then(results => {
-        // console.log('handleSeedAnalysis() Promise.all() resolve', results);
         if (results.length === 0) {
           return resolve([]);
         }
         const entries = results[0];
         const historicalData = results[results.length - 1];
-        console.log('historicalData() pre', results);
+        console.log('historicalData() pre-processed results:', results);
         handleBasicEntryDataGathering(entries, topCompanies)
           .then(seedData => {
             resolve({
@@ -495,7 +473,9 @@ const handleSeedAnalysis = async (userId, campaigns) => {
 };
 
 /**
- * handlePremiumPlanGathering
+ * Handles simple data gathering for
+ * user's subscribed to a premium plan.
+ * NOTE: SIDE PROJECT ==> NOT FULLY-FLESHED OUT
  * @param {string} company
  * @param {Object} storedAnalysisRecord
  */
@@ -505,9 +485,7 @@ const handlePremiumPlanGathering = (company, storedAnalysisRecord) => {
   console.log('handlePremiumPlanGathering sarKeys: ', sarKeys);
   sarKeys.forEach(key => {
     const datasetToOrganize = storedAnalysisRecord[key];
-    // console.log('sarKeys.forEach [key] before: ', key);
     key = capitalizeFirstLetter(snakeToCamelCase(key));
-    // console.log('sarKeys.forEach [key] after: ', key);
     const dataset = generateDataset(company, key, datasetToOrganize);
     if (dataset) {
       setOfOrganizedDatasets[key] = dataset;
@@ -517,7 +495,9 @@ const handlePremiumPlanGathering = (company, storedAnalysisRecord) => {
 };
 
 /**
- * handlePremiumAnalysis
+ * Handles simple data analysis for
+ * user's subscribed to a premium plan.
+ * NOTE: SIDE PROJECT ==> NOT FULLY-FLESHED OUT
  * @param {string} subscription
  * @param {string} company
  * @param {Object} storedAnalysis
@@ -530,13 +510,7 @@ const handlePremiumAnalysis = (subscription, company, storedAnalysisRecord) => {
     company,
     storedAnalysisRecord,
   );
-  return new Promise((resolve, reject) => {
-    // 1) Gather additional data(TBA based on app review results)
-    // 2) Handle promises if any
-    // 3) Generate and organize datasets for graphical representation
-    // on the client.
-    // NOTE: all in {x: {...}, y: {...} } format for data charts.
-    // 4) TBA
+  return new Promise((resolve, _) => {
     switch (subscription) {
       case 'seed':
         return resolve([]);
@@ -550,13 +524,12 @@ const handlePremiumAnalysis = (subscription, company, storedAnalysisRecord) => {
 };
 
 /**
- * handleFinalResults
+ * Handles generating final results.
  * @param {Object} results
  * @return {Object}
  */
 const handleFinalResults = results => {
   if (results.length === 0) {
-    console.log('handleFinalResults results.length === 0');
     return results;
   }
   let finalResultsObject = {};
@@ -591,19 +564,17 @@ module.exports = {
       },
     })
       .then(campaigns => {
-        // console.log('Campaign.findAll() campaigns', campaigns);
-        // NOTE: If the user has no campaigns, then on the FE they should not be able
-        // to issue a network request for generic analysis on 0 campaigns.
+        // NOTE: If the user has no campaigns, then on the FE they should not be able to issue a network request for generic analysis on 0 campaigns.
         handleSeedAnalysis(req.query.uid, campaigns)
           .then(results => {
             console.log(
-              'general handleSeedAnalysis() Promise.all() resolved',
+              'general() handleSeedAnalysis() Promise.all() resolved',
               results,
             );
             return res.json({ data: results });
           })
           .catch(error => {
-            console.log('general Promise.all() error', error);
+            console.log('general() Promise.all() error', error);
             return res.json({
               data: null,
               success: false,
@@ -612,7 +583,7 @@ module.exports = {
           });
       })
       .catch(error => {
-        console.log('general Campaign.findAll() error', error);
+        console.log('general() Campaign.findAll() error', error);
         return res.json({
           data: null,
           success: false,
@@ -647,15 +618,15 @@ module.exports = {
       .then(campaigns => {
         promises.push(handleSeedAnalysis(req.query.uid, campaigns));
         console.log(
-          'analyticalOptions[req.query.company]',
+          'Company:',
+          req.query.company,
           analyticalOptions[req.query.company],
         );
-        // return res.json({ data: [] });
         analyticalOptions[req.query.company]
           .findAll({ where: { campaign_id: req.query.cid } })
           .then(records => {
             records.map(record => {
-              console.log('analyticalOptions.findOne() record', record);
+              console.log('.findAll() resultant record', record);
               promises.push(
                 handlePremiumAnalysis(
                   req.query.plan,
@@ -677,10 +648,7 @@ module.exports = {
                   finalizedPremiumAnalysisResults,
                 );
                 dataset = { ...dataset, ...finalizedPremiumAnalysisResults };
-                console.log(
-                  'analyticalOptions[req.query.company].findOne Promise.all(promises) dataset',
-                  dataset,
-                );
+                console.log('Promise.all() resultant dataset:', dataset);
                 return res.json({
                   data: dataset,
                   success: true,
@@ -692,7 +660,7 @@ module.exports = {
               });
           })
           .catch(error => {
-            console.log('analyticalOptions.findOne() error', error);
+            console.log('.findAll() error', error);
             return res.json({
               data: null,
               success: false,
@@ -701,7 +669,7 @@ module.exports = {
           });
       })
       .catch(error => {
-        console.log('general Campaign.findAll() error', error);
+        console.log('general() findAll() error', error);
         return res.json({
           data: null,
           success: false,
