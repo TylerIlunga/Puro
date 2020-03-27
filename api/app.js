@@ -5,17 +5,12 @@ const express = require('express');
 const eSession = require('express-session');
 const logger = require('morgan');
 const routes = require('./src/routes');
-const {
-  jwt: { J_SECRET },
-  session: { S_SECRET },
-} = require('./src/config');
+const { jwt, session } = require('./src/config');
 const app = express();
 const sessionStore = new eSession.MemoryStore();
 const oneHour = new Date().getTime() + 60 * 60 * 1000;
 
-app.set('view engine', 'ejs');
-app.set('views', __dirname + '/src/views');
-app.use(cookieParser(J_SECRET));
+app.use(cookieParser(jwt.J_SECRET));
 app.use(
   cors({
     credentials: true,
@@ -34,7 +29,7 @@ app.use(
     store: sessionStore,
     saveUninitialized: false,
     resave: true,
-    secret: S_SECRET,
+    secret: session.S_SECRET,
   }),
 );
 app.use('/', routes);

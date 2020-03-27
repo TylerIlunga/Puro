@@ -21,8 +21,7 @@ export default class Auth {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: `BEARER ${this.getToken()}`,
-      api_key: `BEARER ${config.api_key}`,
-      auth_key: `OHM ${config.auth_key}`,
+      api_key: `OHM ${config.api_key}`,
     };
 
     return fetch(`${this.domain}${endpoint}`, {

@@ -10,8 +10,7 @@ export default class Email {
       'Access-Control-Allow-Origin': this.domain,
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      api_key: `BEARER ${config.api_key}`,
-      auth_key: `OHM ${config.auth_key}`,
+      api_key: `OHM ${config.api_key}`,
     };
 
     return fetch(`${this.domain}${endpoint}`, {

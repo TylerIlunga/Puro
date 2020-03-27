@@ -77,8 +77,7 @@ export default class CampaignService {
       Accept: 'text/csv',
       'Content-Type': 'text/csv',
       Authorization: `BEARER ${authToken}`,
-      api_key: `BEARER ${config.api_key}`,
-      auth_key: `OHM ${config.auth_key}`,
+      api_key: `OHM ${config.api_key}`,
     };
     return fetch(
       `${domain}/api/campaign/export?uid=${uid}&id=${id}&title=${title}&type=${type}`,

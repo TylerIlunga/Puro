@@ -61,7 +61,7 @@ Object.keys(models).forEach(key => {
   if ('associate' in models[key]) {
     models[key].associate(models);
   }
-  if (!process.env.PROD) {
+  if (process.env.SYS_ENV === 'DEV') {
     console.log(key);
   }
 });

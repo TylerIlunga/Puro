@@ -5,7 +5,6 @@
  *  Date          :  2020-03-25
  *  Description   :  Module that holds all of the services for "Analysis".
  *                   Includes the following:
- *                   middleware()
  *                   signup()
  *                   verifyAccount()
  *                   login()
@@ -44,45 +43,6 @@ let tempUserObject = {};
 // NOTE: Change all to "Missing fields" to not give away information.
 
 module.exports = {
-  /**
-   * middleware
-   * Handles verification checks for authenticated users
-   */
-  async middleware(req, res, next) {
-    console.log('GENERIC MIDDLEWARE middleware()');
-    // headers: { authorization: BEARER {JWT}, API_KEY: OHM {KEY} }
-    if (
-      !(
-        req.headers.authorization &&
-        req.headers.authorization.indexOf('BEARER') > -1
-      )
-    ) {
-      return res.json({ error: 'Missing JWT', success: false });
-    }
-    console.log('headers', req.headers);
-    if (!(req.headers.api_key && req.headers.api_key.indexOf('OHM') > -1)) {
-      return res.json({ error: 'Missing key', success: false });
-    }
-    if (req.headers.api_key.split(' ')[1] !== API_KEY) {
-      return res.json({ error: 'Invalid key', success: false });
-    }
-
-    let token = req.headers.authorization.split(' ')[1];
-    console.log('token', token);
-    try {
-      let decoded = await jwt.verify(token, J_SECRET);
-      console.log('DECODED token::::', decoded);
-      // is token expired
-      if (Date.now() > decoded.exp * 1000) {
-        return res.json({ success: false, error: 'Session expired.' });
-      }
-
-      return next();
-    } catch (error) {
-      console.log('middleware() error', error);
-      return res.json({ error: 'Invalid session.', success: false });
-    }
-  },
   /**
    * signup[POST]
    * Creates an account for a user(must verify via email)

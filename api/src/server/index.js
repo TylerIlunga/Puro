@@ -9,8 +9,7 @@
  *  Exceptions    :  N/A
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-// NOTE: require("dotenv").load() for command line operation
-// of loading in environment variables for private files
+require('dotenv').load();
 const app = require('../../app');
 const { port } = require('../config');
 const { startSnapshotCronJob } = require('../tools');

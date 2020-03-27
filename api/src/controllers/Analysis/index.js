@@ -19,15 +19,16 @@
  *                   handleSeedAnalysis()
  *                   general()
  *                   fetch()
- *                   export()
  *
  *  Notes         :  1
  *  Warnings      :  None
  *  Exceptions    :  N/A
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-const csv = require('csv');
-const { capitalizeFirstLetter, snakeToCamelCase } = require('../../config');
+const {
+  capitalizeFirstLetter,
+  snakeToCamelCase,
+} = require('../../tools/helpers');
 const {
   Generic,
   Facebook,
@@ -707,14 +708,6 @@ module.exports = {
           error: 'Error fetching analytics. Please contact support.',
         });
       });
-  },
-  /**
-   * export [POST]
-   * @param {Object} req
-   * @param {Object} res
-   */
-  export(req, res) {
-    // exporting reports(time series, graphical data[ordered pairs in two different columns])
   },
   /**
    * seed [GET]
