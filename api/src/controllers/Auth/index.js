@@ -15,7 +15,7 @@
  *                   resetPassword()
  *                   deleteAccount()
  *
- *  Notes         :  7
+ *  Notes         :  1
  *  Warnings      :  None
  *  Exceptions    :  N/A
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
