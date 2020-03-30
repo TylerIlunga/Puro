@@ -35,8 +35,8 @@ export default class Email {
     }
   }
 
-  addToList(email, recaptchaResponse) {
-    return this.fetch(`/api/email/add?e=${email}&r=${recaptchaResponse}`)
+  addToList(email) {
+    return this.fetch(`/api/email/add?e=${email}`)
       .then(res => {
         console.log('EMAIL RESPONSE', res);
         return Promise.resolve(res);

@@ -25,7 +25,6 @@ class Confirm extends Component {
   }
 
   inputIsValid(email, token) {
-    // return email && token && recaptchaResponse
     return email && token;
   }
 

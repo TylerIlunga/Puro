@@ -18,7 +18,6 @@ class LogIn extends Component {
     this.state = {
       email: '',
       password: '',
-      recaptchaResponse: '',
       tfaToken: '',
       tfaEnabled: false,
       tfaBackupEnabled: false,
@@ -55,7 +54,6 @@ class LogIn extends Component {
     }
     this.AuthService.handleTFA({
       token: this.state.tfaToken,
-      recaptchaResponse: 'test',
     })
       .then(res => {
         console.log('success: res', res);
@@ -191,7 +189,6 @@ class LogIn extends Component {
   }
 
   inputIsValid(email, password) {
-    // return email && password && recaptchaResponse
     return email && password;
   }
   handleLogin(evt) {
@@ -202,7 +199,6 @@ class LogIn extends Component {
     this.AuthService.login({
       email: this.state.email,
       password: this.state.password,
-      recaptchaResponse: '',
     })
       .then(res => {
         console.log('success: res', res);

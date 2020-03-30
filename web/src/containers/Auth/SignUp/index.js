@@ -11,7 +11,6 @@ class SignUp extends Component {
       email: '',
       password: '',
       confirmPassword: '',
-      recaptchaResponse: '',
       business: '',
       cMessage: 'Check your email for your activation link!',
       isChecked: false,
@@ -27,7 +26,6 @@ class SignUp extends Component {
   // explaining our terms of service/privacy policy
 
   inputIsValid(email, password, confirmPassword, isChecked) {
-    // return email && password && recaptchaResponse
     if (!(email && password && confirmPassword && isChecked)) {
       return { error: 'Required info is missing!' };
     }
@@ -55,7 +53,6 @@ class SignUp extends Component {
     this.AuthService.signUp({
       email: this.state.email,
       password: this.state.password,
-      recaptchaResponse: '',
       business: this.state.business,
     })
       .then(res => {

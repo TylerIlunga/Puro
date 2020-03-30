@@ -15,7 +15,6 @@ class ForgotPassword extends Component {
   }
 
   inputIsValid(email) {
-    // return email && recaptchaResponse
     return !!email;
   }
 

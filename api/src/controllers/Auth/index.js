@@ -29,7 +29,6 @@ const Op = Sequelize.Op;
 const User = db.User;
 const {
   web_base,
-  API_KEY,
   jwt: { J_SECRET },
 } = require('../../config');
 const { genid, genPassword } = require('../../db/config');
@@ -37,77 +36,81 @@ const { sendEmail } = require('../../email');
 const getWelcomeHtml = require('../../email/static/welcome');
 const getForgotPasswordHtml = require('../../email/static/forgot');
 
-let tempUserObject = {};
-
-// NOTE: Get rid of try, catch
-// NOTE: Change all to "Missing fields" to not give away information.
+let tempTFAUser = {};
 
 module.exports = {
   /**
-   * signup[POST]
    * Creates an account for a user(must verify via email)
+   * @param {Object} req
+   * @param {Object} res
    */
   async signup(req, res) {
-    if (!(req.body.email || req.body.password || req.body.recaptchaResponse)) {
-      return res.json({ error: 'Missing fields.', success: false });
-    }
+    try {
+      if (!req.body.email && !req.body.password) {
+        return res.json({ error: 'Missing fields.', success: false });
+      }
 
-    let { email, password, recaptchaResponse } = req.body;
-    const user = await User.findOne({ where: { email } });
-    if (user) return res.json({ error: 'User exists.', success: false });
+      let { email, password } = req.body;
+      const user = await User.findOne({ where: { email } });
+      if (user) {
+        return res.json({ error: 'User exists.', success: false });
+      }
 
-    console.log('oldPassword', password);
-    password = await genPassword(password);
-    console.log('newPassword', password);
+      // seven days ahead
+      const trial_expires = new Date();
+      trial_expires.setDate(trial_expires.getDate() + 7);
+      trial_expires.setHours(8);
 
-    const trial_expires = new Date();
-    // seven days ahead
-    trial_expires.setDate(trial_expires.getDate() + 7);
-    // at 8 AM
-    trial_expires.setHours(8);
+      password = await genPassword(password);
 
-    User.create({
-      password,
-      subscription: 'free',
-      email: email.trim(),
-      trial_expires: new Date().setTime(Date.parse(trial_expires)),
-      business: req.body.business ? req.body.business : null,
-      activation_token: genid(),
-      type: 'user',
-    })
-      .then(user => {
-        //change 1st argument to support@puro.com
-        // https://aws.amazon.com/ses/pricing/
-        sendEmail(
-          'support@puro.com',
-          user.email,
-          'Activate your account!',
-          getWelcomeHtml(user),
-        )
-          .then(success => {
-            console.log('email sent!');
-            return res.json({ success: true, user });
-          })
-          .catch(error => {
-            console.log(`signup error: ${error}`);
-            return res.json({
-              error:
-                'Error sending activation email, please contact support@puro.com',
-              success: false,
-            });
-          });
+      User.create({
+        password,
+        subscription: 'free',
+        email: email.trim(),
+        trial_expires: new Date().setTime(Date.parse(trial_expires)),
+        business: req.body.business ? req.body.business : null,
+        activation_token: genid(),
+        type: 'user',
       })
-      .catch(error => {
-        console.log('User.create() error', error);
-        return res.json({ error: 'Error saving user.', success: false });
+        .then(user => {
+          sendEmail(
+            'support@puro.com',
+            user.email,
+            'Activate your account!',
+            getWelcomeHtml(user),
+          )
+            .then(_ => {
+              console.log('email sent!');
+              return res.json({ success: true, user });
+            })
+            .catch(error => {
+              console.log(`signup error: ${error}`);
+              return res.json({
+                error:
+                  'Error sending activation email, please contact support@puro.com',
+                success: false,
+              });
+            });
+        })
+        .catch(error => {
+          console.log('User.create() error', error);
+          return res.json({ error: 'Error saving user.', success: false });
+        });
+    } catch (error) {
+      console.log('signup() error', error);
+      res.json({
+        error: 'Error signing up user, please contact support@puro.com',
+        success: false,
       });
+    }
   },
-  /*
-   * login [POST]
+  /**
    * Logs a user in and checks for Two Factor Authentication (TFA)
+   * @param {Object} req
+   * @param {Object} res
    */
   async login(req, res) {
-    if (!(req.body.email || req.body.password) && !req.body.recaptchaResponse) {
+    if (!req.body.email && !req.body.password) {
       return res.json({ error: 'Missing fields', success: false });
     }
 
@@ -133,12 +136,12 @@ module.exports = {
       return res.json({ error: 'Activate your account!', success: false });
     }
 
-    // TODO: check if free trial expired, if so, prompt then with payment plans.
-    // However, should still have credit card on file?
+    // NOTE: If this was not a side project:
+    // If free trial expired, prompt current user with payment plans post login.
     let trialExpired = false;
-    // if(Date.now() > user.trial_expires * 1000) {
-    //   return res.json({success: false, error: 'Session expired.'});
-    // }
+    if (user.trial_expires && Date.now() >= user.trial_expires * 1000) {
+      return res.json({ success: false, error: 'Trial expired.' });
+    }
 
     bcrypt.compare(password, user.password, async (error, isMatch) => {
       if (error) {
@@ -148,36 +151,33 @@ module.exports = {
       if (!isMatch) {
         return res.json({ error: 'Invalid Password!', success: false });
       }
+
       user.dataValues.password = null;
-      delete user.dataValues.password; // NOTE: doesn't work
-      console.log('user.dataValues', user.dataValues);
+      delete user.dataValues.password;
 
       if (user.two_factor_enabled) {
-        console.log('USER HAS TFA ENABLED');
-        tempUserObject = user.dataValues;
-        console.log('tempUserObject:', tempUserObject);
+        tempTFAUser = user.dataValues;
         return res.json({ tfaEnabled: true, success: true, error: false });
       }
 
-      // req.session.user = user.dataValues;
       req.session.save(err => {
         if (err) {
           console.log('req.session.save() err', err);
           return res.json({ error: 'Error creating session.', success: false });
         }
+
         user.password = null;
         delete user.password;
-        let token = jwt.sign({ data: user }, J_SECRET, { expiresIn: '1d' });
-        console.log('creating cookie for token: ', token);
-        // res.signedCookie("un")
-        // 1000 * 60 * 15 = 15 mins
+
         res.setHeader('Access-Control-Allow-Credentials', true);
+
+        const token = jwt.sign({ data: user }, J_SECRET, { expiresIn: '1d' });
         res.cookie('user_token', token, {
+          // 1000 * 60 * 15 = 15 mins
           maxAge: 1000 * 60 * 15,
           signed: true,
         });
-        console.log('req.session', req.session);
-        //NOTE: do not return or store password in token
+
         return res.json({
           user,
           token,
@@ -189,62 +189,61 @@ module.exports = {
     });
   },
   /**
-   * handleTFA[GET]
    * Handles Two Factor Authentication for user attempting
    * to log in.
+   * @param {Object} req
+   * @param {Object} res
    */
   async handleTFA(req, res) {
     // req.query.rr = recaptcha
     if (!(req.query && req.query.token && req.query.rr)) {
       return res.json({ error: 'Missing fields', success: false });
     }
-    console.log('tempUserObject:', tempUserObject);
     const isValidToken = speakeasy.totp.verify({
-      secret: tempUserObject.two_factor_secret,
+      secret: tempTFAUser.two_factor_secret,
       encoding: 'ascii',
       token: req.query.token,
     });
-    console.log('isValidToken', isValidToken);
     if (!isValidToken) {
       return res.json({ error: 'Invalid token.', success: false });
     }
-    // TODO: check if free trial expired, if so, prompt then with payment plans.
-    // However, should still have credit card on file?
+
     let trialExpired = false;
-    // if(Date.now() > user.trial_expires * 1000) {
-    //   return res.json({success: false, error: 'Session expired.'});
-    // }
+    if (user.trial_expires && Date.now() >= user.trial_expires * 1000) {
+      return res.json({ success: false, error: 'Trial expired.' });
+    }
+
     req.session.save(err => {
       if (err) {
         console.log('req.session.save() err', err);
         return res.json({ error: 'Error creating session.', success: false });
       }
-      tempUserObject.password = null;
-      delete tempUserObject.password;
-      let token = jwt.sign({ data: tempUserObject }, J_SECRET, {
+
+      tempTFAUser.password = null;
+      delete tempTFAUser.password;
+
+      res.setHeader('Access-Control-Allow-Credentials', true);
+
+      const token = jwt.sign({ data: tempTFAUser }, J_SECRET, {
         expiresIn: '1d',
       });
-      console.log('creating cookie for token: ', token);
-      // res.signedCookie("un")
-      // 1000 * 60 * 15 = 15 mins
-      res.setHeader('Access-Control-Allow-Credentials', true);
       res.cookie('user_token', token, {
+        // 1000 * 60 * 15 = 15 mins
         maxAge: 1000 * 60 * 15,
         signed: true,
       });
-      console.log('req.session', req.session);
-      //NOTE: do not return or store password in token
-      res.json({ user: tempUserObject, token, trialExpired, success: true });
-      tempUserObject = null;
+
+      res.json({ user: tempTFAUser, token, trialExpired, success: true });
+      tempTFAUser = null;
     });
   },
   /**
-   * verifyAccount[GET]
    * Verifies and activates user's account via click on
    * sent out email link.
+   * @param {Object} req
+   * @param {Object} res
    */
   async verifyAccount(req, res) {
-    console.log('req.query', req.query);
     if (!(req.query && req.query.token && req.query.email)) {
       return res.json({ error: 'Missing token', success: true });
     }
@@ -258,9 +257,10 @@ module.exports = {
     if (!user) {
       return res.json({ error: 'Invalid email or token!', success: true });
     }
+
     user
       .update({ active: true, activation_token: null })
-      .then(result => {
+      .then(_ => {
         return res.redirect(
           `${web_base}/login?msg=${'Your acccount has been activated'}`,
         );
@@ -274,45 +274,40 @@ module.exports = {
   },
 
   /**
-   * forgotPassword[POST]
    * Sends password reset link to user's stored email.
+   * @param {Object} req
+   * @param {Object} res
    */
   async forgotPassword(req, res) {
-    if (!req.body.email) {
-      return res.json({ error: 'Missing email.', success: false });
-    }
     try {
+      if (!req.body.email) {
+        return res.json({ error: 'Missing email.', success: false });
+      }
+
       const { email } = req.body;
       const user = await User.findOne({ where: { email } });
       if (!user) {
         return res.json({ error: 'Account does not exist!', success: false });
       }
-      console.log('user', user);
 
-      // if (!user.active) {
-      //   return res.json({ error: "Activate your account!", success: false });
-      // }
-
-      const expireDate = new Date();
-      // one day ahead
-      expireDate.setDate(expireDate.getDate() + 1);
-      // at 8 AM
-      expireDate.setHours(8);
       const passwordResetToken = `${genid()}`;
+      const expireDate = new Date();
+      expireDate.setDate(expireDate.getDate() + 1);
+      expireDate.setHours(8);
+
       user
         .update({
           password_reset_token: passwordResetToken,
           password_reset_expires: new Date().setTime(Date.parse(expireDate)),
         })
-        .then(result => {
-          // https://aws.amazon.com/ses/pricing/
+        .then(_ => {
           sendEmail(
             'support@puro.com',
             user.email,
             'Reset your password!',
             getForgotPasswordHtml({ passwordResetToken, email: user.email }),
           )
-            .then(success => {
+            .then(_ => {
               console.log('email sent!');
               return res.json({
                 success: 'An email has been sent with instructions!',
@@ -337,65 +332,76 @@ module.exports = {
         });
     } catch (error) {
       console.log('forgot password error: ', error);
-      return res.json({ error, success: false });
+      return res.json({
+        error:
+          'Error occuring during event "Forgot Password", please contact support@puro.com',
+        success: false,
+      });
     }
   },
   /**
-   * verifyResetToken[GET]
    * Verfies the account reset token we set and send out
    * to user's via email when they need to reset their
    * account. Redirects user back to password reset view.
+   * @param {Object} req
+   * @param {Object} res
    */
   async verifyResetToken(req, res) {
-    if (!(req.query && req.query.token && req.query.email)) {
-      return res.send('Missing email or token.');
+    try {
+      if (!(req.query && req.query.token && req.query.email)) {
+        return res.send('Missing email or token.');
+      }
+
+      const { token, email } = req.query;
+      const user = await User.findOne({
+        where: {
+          [Op.and]: [{ password_reset_token: token }, { email: email }],
+        },
+      });
+      if (!user) {
+        return res.send('Invalid email or token!');
+      }
+      if (user.trial_expires && Date.now() >= user.trial_expires * 1000) {
+        return res.json({ success: false, error: 'Trial expired.' });
+      }
+
+      res.redirect(`${web_base}/reset?&email=${email}&token=${token}`);
+    } catch (error) {
+      console.log('.verifyResetToken() error:', error);
+      res.json({
+        error: 'Could not verify reset token, please contact supprt@puro.com',
+        success: false,
+      });
     }
-    const { token, email } = req.query;
-    const user = await User.findOne({
-      where: {
-        [Op.and]: [{ password_reset_token: token }, { email: email }],
-      },
-    });
-    if (!user) {
-      return res.send('Invalid email or token!');
-    }
-    // TODO: handle if is token expired
-    // if(Date.now() > user.password_reset_expires * 1000) {
-    //   return res.json({ error: 'Token expired.', success: false });
-    // }
-    // return res.json({ success: true, error: null });
-    return res.redirect(`${web_base}/reset?&email=${email}&token=${token}`);
   },
   /**
-   * resetPassword[POST]
    * Resets user password.
+   * @param {Object} req
+   * @param {Object} res
    */
   async resetPassword(req, res) {
-    // NOTE: Handle confirmPassword value on FE && old password equaling newPassword.
-    if (
-      !(req.body && req.body.email && req.body.newPassword && req.body.token)
-    ) {
-      return res.json({ error: 'Missing fields', success: false });
-    }
-
     try {
+      if (
+        !(req.body && req.body.email && req.body.newPassword && req.body.token)
+      ) {
+        return res.json({ error: 'Missing fields', success: false });
+      }
+
       const { email, newPassword, token } = req.body;
-      console.log(email, newPassword, token);
       const currentUser = await User.findOne({
         where: { email: email, password_reset_token: token },
       });
-      console.log(`currentUser: ${JSON.stringify(currentUser, null, 2)}`);
       if (!currentUser) {
         return res.json({ error: 'Invalid email or token!' });
       }
-      // TODO: handle if is token expired
-      // if(Date.now() > currentUser.password_reset_expires * 1000) {
-      //   return res.json({ error: 'Token expired.', success: false });
-      // }
+      if (
+        currentUser.trial_expires &&
+        Date.now() >= currentUser.trial_expires * 1000
+      ) {
+        return res.json({ success: false, error: 'Trial expired.' });
+      }
 
-      let storedPassword = await genPassword(newPassword);
-      console.log(`storedPassword:\n${storedPassword}`);
-
+      const storedPassword = await genPassword(newPassword);
       bcrypt.compare(
         newPassword,
         currentUser.password,
@@ -416,7 +422,7 @@ module.exports = {
               password_reset_expires: null,
               password_reset_token: null,
             })
-            .then(result => {
+            .then(_ => {
               return res.json({ success: true, error: null });
             })
             .catch(error => {
@@ -430,106 +436,134 @@ module.exports = {
         },
       );
     } catch (error) {
-      console.log(`reset password query error: ${error}`);
-      res.json({ error, success: false });
+      console.log('.resetPassword() error', error);
+      res.json({
+        error: 'Could not reset password, please contact suppoort@puro.com',
+        success: false,
+      });
     }
   },
   /**
-   * logout[GET]
    * Logs user out.
+   * @param {Object} req
+   * @param {Object} res
    */
   logout(req, res) {
-    console.log('req.session', req.session);
     if (!req.session) {
       return res.json({ session: false });
     }
+
     req.session.destroy();
     res.clearCookie('p_sid');
     res.clearCookie('user_token');
-    console.log('session destroyed!');
-    console.log(req.session);
+
+    console.log('Session has been destroyed.');
+
     res.json({ success: true });
   },
   /**
-   * deleteAccount[DELETE]
    * Deletes user's account information.
+   * @param {Object} req
+   * @param {Object} res
    */
   async deleteAccount(req, res) {
-    if (!(req.query && req.query.id && req.query.email && req.body.password)) {
-      return res.json({ error: 'Missing fields.', success: false });
+    try {
+      if (
+        !(req.query && req.query.id && req.query.email && req.body.password)
+      ) {
+        return res.json({ error: 'Missing fields.', success: false });
+      }
+
+      const { id, email } = req.query;
+      const currentUser = await User.findOne({
+        where: { id: id, email: email },
+      });
+      if (!currentUser) {
+        return res.json({ error: 'Invalid email or id!', success: false });
+      }
+
+      const { password } = req.body;
+      bcrypt.compare(password, currentUser.password, (error, isMatch) => {
+        if (error) {
+          return res.json({ error, success: false });
+        }
+        if (!isMatch) {
+          return res.json({
+            error: 'Old Password is invalid!',
+            success: false,
+          });
+        }
+
+        currentUser
+          .destroy()
+          .then(_ => {
+            req.session.destroy();
+            res.clearCookie('user_token');
+
+            console.log('Session has been destroyed.');
+
+            return res.json({ success: true, error: null });
+          })
+          .catch(error => {
+            console.log('currentUser.destroy() error', error);
+            return res.json({
+              error: 'Error deleting account, please contact support@puro.com',
+              success: false,
+            });
+          });
+      });
+    } catch (error) {
+      console.log('.deleteAccount() error:', error);
+      res.json({
+        error: 'Could not delete account, please contact suppoort@puro.com',
+        success: false,
+      });
     }
-
-    const { id, email } = req.query;
-    const currentUser = await User.findOne({
-      where: { id: id, email: email },
-    });
-    console.log(`currentUser: ${JSON.stringify(currentUser, null, 2)}`);
-    if (!currentUser)
-      return res.json({ error: 'Invalid email or id!', success: false });
-
-    const { password } = req.body;
-    bcrypt.compare(password, currentUser.password, (error, isMatch) => {
-      if (error) {
-        return res.json({ error, success: false });
-      }
-      if (!isMatch) {
-        return res.json({ error: 'Old Password is invalid!', success: false });
+  },
+  /**
+   * Resends activation email to user's who created an account
+   * but did not verify and activate.
+   * @param {Object} req
+   * @param {Object} res
+   */
+  async resendEmail(req, res) {
+    try {
+      if (!(req.query && req.query.email)) {
+        return res.json({ error: 'Missing fields.', success: false });
       }
 
-      currentUser
-        .destroy()
-        .then(result => {
-          req.session.destroy();
-          res.clearCookie('user_token');
-          console.log('session destroyed!');
-          console.log('req.session:::', req.session);
+      const user = await User.findOne({
+        attributes: ['activation_token', 'email'],
+        where: { email: req.query.email },
+      });
+      if (!user || !user.activation_token) {
+        return res.json({ error: 'Account does not exist!', success: false });
+      }
 
-          return res.json({ success: true, error: null });
+      sendEmail(
+        'support@puro.com',
+        user.email,
+        'Activate your account!',
+        getWelcomeHtml(user),
+      )
+        .then(_ => {
+          console.log('email sent!');
+          return res.json({ success: true, error: false });
         })
         .catch(error => {
-          console.log('currentUser.destroy() error', error);
+          console.log('signup error:', error);
           return res.json({
-            error: 'Error deleting account, please contact support@puro.com',
+            error:
+              'Error sending activation email, please contact support@puro.com',
             success: false,
           });
         });
-    });
-  },
-  /**
-   * resendEmail[GET]
-   * Resends activation email to user's who created an account
-   * but did not verify and activate.
-   */
-  async resendEmail(req, res) {
-    if (!(req.query && req.query.email)) {
-      return res.json({ error: 'Missing fields.', success: false });
-    }
-
-    const user = await User.findOne({
-      attributes: ['activation_token', 'email'],
-      where: { email: req.query.email },
-    });
-    console.log(`user: ${JSON.stringify(user, null, 2)}`);
-    if (!user || !user.activation_token)
-      return res.json({ error: 'Account does not exist!', success: false });
-    // https://aws.amazon.com/ses/pricing/
-    sendEmail(
-      'support@puro.com',
-      user.email,
-      'Activate your account!',
-      getWelcomeHtml(user),
-    )
-      .then(success => {
-        console.log('email sent!');
-        return res.json({ success: true, error: false });
-      })
-      .catch(error => {
-        console.log(`signup error: ${error}`);
-        return res.json({
-          error:
-            'Error sending activation email, please contact support@puro.com',
-          success: false,
-        });
+    } catch (error) {
+      console.log(`.resendEmail() error:`, error);
+      res.json({
+        error: 'Could not resend email, please contact suppoort@puro.com',
+        success: false,
       });
+    }
   },
 };

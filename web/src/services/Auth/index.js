@@ -68,15 +68,14 @@ export default class Auth {
       .catch(err => Promise.reject(err));
   }
 
-  login({ email, password, recaptchaResponse }) {
-    console.log('logging in ' + email, password, recaptchaResponse);
+  login({ email, password }) {
+    console.log('logging in ' + email, password);
     // Get a token from api server using the fetch api
     return this.fetch('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({
         email,
         password,
-        recaptchaResponse,
       }),
     })
       .then(res => {
@@ -87,11 +86,9 @@ export default class Auth {
       .catch(err => Promise.reject(err));
   }
 
-  handleTFA({ token, recaptchaResponse }) {
+  handleTFA({ token }) {
     console.log('handleTFA() token', token);
-    return this.fetch(
-      `/api/auth/handleTFA?token=${token}&rr=${recaptchaResponse}`,
-    )
+    return this.fetch(`/api/auth/handleTFA?token=${token}`)
       .then(res => {
         console.log('handleTFA RESPONSE', res);
         if (!res.error && res.token) this.setToken(res.token);
@@ -100,14 +97,13 @@ export default class Auth {
       .catch(err => Promise.reject(err));
   }
 
-  signUp({ email, password, business, recaptchaResponse }) {
+  signUp({ email, password, business }) {
     return this.fetch('/api/auth/signup', {
       method: 'POST',
       body: JSON.stringify({
         email,
         password,
         business,
-        recaptchaResponse,
       }),
     })
       .then(res => {

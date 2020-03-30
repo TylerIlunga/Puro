@@ -34,7 +34,6 @@ class ResetPassword extends Component {
   // explaining our terms of service/privacy policy
 
   inputIsValid(email, newPassword, confirmNewPassword, token) {
-    // return && recaptchaResponse
     if (!(email && newPassword && token && confirmNewPassword)) {
       return false;
     }
