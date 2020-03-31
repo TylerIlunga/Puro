@@ -2,12 +2,12 @@
  *  File name     :  ./controllers/Support
  *  Purpose       :  Module for the Support service.
  *  Author        :  Tyler Ilunga
- *  Date          :  2020-03-25
- *  Description   :  Module that holds all of the services for "Support".
+ *  Date          :  2020-03-31
+ *  Description   :  Module that holds all of the services for customer support.
  *                   Includes the following:
  *                   submitIssue()
  *
- *  Notes         :  1
+ *  Notes         :  0
  *  Warnings      :  None
  *  Exceptions    :  N/A
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -17,10 +17,9 @@ const Issue = db.Issue;
 
 module.exports = {
   /**
-   * submitIssue[POST]
-   * Stores current user's ticket ID in database and sends
-   * out email to us(issue, ticket id, user_id) and
-   * to the current user(confirmation and ticket id)
+   * Stores current user's ticket ID in the database.
+   * @param {Object} req
+   * @param {Object} res
    */
   async submitIssue(req, res) {
     if (
@@ -35,6 +34,7 @@ module.exports = {
     ) {
       return res.json({ error: 'Missing fields', success: false });
     }
+
     const issue = await Issue.findOne({
       where: { ticket_id: req.query.ticketId },
     });
@@ -44,20 +44,15 @@ module.exports = {
         success: false,
       });
     }
+
     Issue.create({
       ticket_id: req.query.tid,
       user_id: req.query.uid,
     })
-      .then(result => {
-        // NOTE: switch to Mailchimp from mailgun?
-        // Email to use
-        // Email to them
-        console.log('Issue.create resolved', result);
-        return res.json({ success: true, error: false });
-      })
+      .then(_ => res.json({ success: true, error: false }))
       .catch(error => {
-        console.log('Issue.create error', error);
-        return res.json({ error: 'Creating issue error.', success: false });
+        console.log('.create() error', error);
+        res.json({ error: 'Creating issue error.', success: false });
       });
   },
 };

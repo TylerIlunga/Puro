@@ -1,9 +1,28 @@
+/** ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *  File name     :  ./controllers/Linking
+ *  Purpose       :  Module for the Linking service.
+ *  Author        :  Tyler Ilunga
+ *  Date          :  2020-03-31
+ *  Description   :  Module that holds all of the services for handling third-party accounts.
+ *                   Includes the following:
+ *                   fetch()
+ *                   unlink()
+ *
+ *  Notes         :  0
+ *  Warnings      :  None
+ *  Exceptions    :  N/A
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 const db = require('../../db');
 const LinkedAccount = db.LinkedAccount;
 const Sequelize = db.getClient();
 const Op = Sequelize.Op;
 
 module.exports = {
+  /**
+   * Fetches thrid-party information linked to the current user's account.
+   * @param {Object} req
+   * @param {Object} res
+   */
   async fetch(req, res) {
     if (!(req.query && req.query.uid)) {
       return res.json({ error: 'Missing fields.', success: false });
@@ -19,18 +38,29 @@ module.exports = {
         GoogleIsConnected: false,
       });
     }
-    let resBody = {
+
+    const resBody = {
       MailchimpIsConnected: false,
       GoogleIsConnected: false,
     };
-    linkedAccounts.map(account => {
+
+    linkedAccounts.forEach(account => {
       account = account.dataValues;
-      if (!resBody[`${account.company}IsConnected`]) {
+      const isLinked = resBody[`${account.company}IsConnected`];
+      if (!isLinked) {
+        isLinked = true;
+      } else if (isLinked === undefined) {
         resBody[`${account.company}IsConnected`] = true;
       }
     });
+
     res.json(resBody);
   },
+  /**
+   * Unlinks thrid-party information linked to the current user's account.
+   * @param {Object} req
+   * @param {Object} res
+   */
   async unlink(req, res) {
     if (!(req.query && req.query.uid && req.query.company)) {
       return res.json({ error: 'Missing fields.', success: false });
@@ -48,15 +78,13 @@ module.exports = {
         error: 'Error unlinking account. Contact support.',
       });
     }
+
     linkedAccount
       .destroy()
-      .then(result => {
-        console.log('linkedAccount.destroy() res', result);
-        return res.json({ success: true, error: false });
-      })
+      .then(_ => res.json({ success: true, error: false }))
       .catch(error => {
-        console.log('linkedAccount.destroy() error', error);
-        return res.json({
+        console.log('.destroy() error', error);
+        res.json({
           success: false,
           error: 'Error unlinking account. Contact support.',
         });

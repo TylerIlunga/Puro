@@ -60,7 +60,6 @@ module.exports = sequelize => {
       as: 'entry_twitter_analysis',
       foreignKey: 'entry_id',
     });
-    // Entry.hasOne(models.LinkedInAnalysis, { as: 'entry_linkedin_analysis', foreignKey: 'entry_id' });
   };
 
   return Entry;

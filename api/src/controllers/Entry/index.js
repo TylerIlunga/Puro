@@ -2,17 +2,16 @@
  *  File name     :  ./controllers/Entry
  *  Purpose       :  Module for the Entry service.
  *  Author        :  Tyler Ilunga
- *  Date          :  2020-03-25
+ *  Date          :  2020-03-31
  *  Description   :  Module that holds all of the services for "Analysis".
  *                   Includes the following:
- *                   getAttributes()
  *                   getDataToUpdate()
  *                   list()
  *                   create()
  *                   update()
  *                   delete()
  *
- *  Notes         :  1
+ *  Notes         :  0
  *  Warnings      :  None
  *  Exceptions    :  N/A
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -23,28 +22,13 @@ const Op = Sequelize.Op;
 const Entry = db.Entry;
 
 /**
- * getAttributes
- *
- * Gathers specific attributes needed to be returned
- * after a query.
- */
-const getAtrributes = subscription => {
-  switch (subscription) {
-    case 'free':
-      return ['email', 'clicks', 'username', 'created_at'];
-      break;
-    default:
-      console.log('getAtrributes() default case');
-      return ['email', 'clicks', 'username', 'created_at'];
-  }
-};
-
-/**
  * getDataToUpdate
  *
  * Organizes the request's body into a Data Structure for
  * the database to interpret and update values in Campaign's
  * table.
+ * @param {Object} body
+ * @returns {?Object}
  */
 const getDataToUpdate = body => {
   if (body.email && body.age) {
@@ -64,36 +48,38 @@ const getDataToUpdate = body => {
 
 module.exports = {
   /**
-   * list[GET]
-   * Adds a new email to our email list.
+   * List entries for a given campaign via the campaign's ID.
+   * @param {Object} req
+   * @param {Object} res
    */
   list(req, res) {
-    // TODO: pagination (look at MLAB)[limit] & sorting[order](https://stackoverflow.com/questions/38211170/sequelize-pagination)
-    // Handle order values from FE
     if (!(req.query && req.query.cid && req.query.limit)) {
       return res.json({ error: 'Missing fields', success: false });
     }
+
+    const attributes = ['email', 'clicks', 'username', 'created_at'];
     Entry.findAll({
-      attributes: getAtrributes('free'), //getAtrributes(req.session.user.subscription)
+      attributes,
       where: { campaign_id: req.query.cid },
       limit: req.query.limit,
       order: [['created_at', 'DESC']],
     })
       .then(entries => {
         console.log('entries', entries);
-        return res.json({ entries, success: true, error: null });
+        res.json({ entries, success: true, error: null });
       })
-      .catch(error => {
-        return res.json({
-          error: 'Error getting entries',
+      .catch(_ => {
+        res.json({
+          error: "Error fetching the given campaign's entries",
           entries: null,
           success: false,
         });
       });
   },
   /**
-   * create[POST]
-   * Creates a new entry.
+   * Creates a new campaign entry for seeding.
+   * @param {Object} req
+   * @param {Object} res
    */
   create(req, res) {
     if (!(req.query && req.query.campaign_id && req.query.entries)) {
@@ -115,19 +101,23 @@ module.exports = {
     }
     console.log('populating database...');
     Promise.all(entryCreations)
-      .then(entry => {
+      .then(_ => {
         console.log('entries created!');
         console.timeEnd('Total Duration');
         return res.json({ success: true, error: null });
       })
       .catch(error => {
-        console.log('Entry.create() error', error);
-        return res.json({ error: 'Error saving entries.', success: false });
+        console.log('.create() error', error);
+        return res.json({
+          error: 'Error persisting  entries.',
+          success: false,
+        });
       });
   },
   /**
-   * update[PUT]
-   * Updates an entry.
+   * Updates a campaign's entry.
+   * @param {Object} req
+   * @param {Object} res
    */
   async update(req, res) {
     if (
@@ -139,6 +129,7 @@ module.exports = {
     ) {
       return res.json({ error: 'Missing fields', success: false });
     }
+
     const entry = await Entry.findOne({
       where: {
         [Op.and]: [{ id: req.query.id }, { campaign_id: req.query.cid }],
@@ -147,26 +138,30 @@ module.exports = {
     if (!entry) {
       return res.json({ error: 'Error getting entry.', success: false });
     }
+
     const updatedData = getDataToUpdate(req.body);
     if (!updatedData) {
-      return res.json({ error: 'Missing fields(updatedData)', success: false });
+      return res.json({
+        error: 'Missing fields for an updated entry.',
+        success: false,
+      });
     }
+
     entry
       .update(updatedData)
-      .then(result => {
-        return res.json({ success: true, error: null });
-      })
+      .then(_ => res.json({ success: true, error: null }))
       .catch(error => {
-        console.log('entry.update() error', error);
-        return res.json({
+        console.log('update() error', error);
+        res.json({
           error: 'Error updating this entry.',
           success: false,
         });
       });
   },
   /**
-   * delete[DELETE]
-   * Deletes an entry.
+   * Deletes a campaign's entry.
+   * @param {Object} req
+   * @param {Object} res
    */
   async delete(req, res) {
     if (!(req.query && req.query.id && req.query.cid)) {
@@ -184,12 +179,9 @@ module.exports = {
 
     entry
       .destroy()
-      .then(result => {
-        console.log('entry deleted!');
-        return res.json({ success: true, error: null });
-      })
+      .then(_ => res.json({ success: true, error: null }))
       .catch(error => {
-        console.log('entry.destroy() error', error);
+        console.log('.destroy() error', error);
         return res.json({
           error: 'Error deleting entry, please contact support@puro.com',
           success: false,
