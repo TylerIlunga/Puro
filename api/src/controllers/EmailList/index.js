@@ -14,39 +14,27 @@
 
 const db = require('../../db');
 const EmailList = db.EmailList;
-const Sequelize = db.getClient();
 
 module.exports = {
   /**
-   * add[GET]
    * Adds a new email to our email list.
    */
   add(req, res) {
-    // NOTE: handle recaptchaResponse
-    if (!(req.query && req.query.e && req.query.r)) {
+    if (!(req.query && req.query.e)) {
       return res.json({ error: 'Missing fields.', success: false });
     }
 
     EmailList.findOne({ where: { email: req.query.e } })
-      .then(email => {
+      .then(async email => {
         if (email) {
           return res.json({ error: 'Email exists!', success: false });
         }
-        EmailList.create({ email: req.query.e })
-          .then(result => {
-            console.log('success saving email!');
-            return res.json({ success: true, error: false });
-          })
-          .catch(error => {
-            console.log('error', error);
-            return res.json({
-              error: 'Error saving email! Please contact support@puro.com',
-              success: false,
-            });
-          });
+        await EmailList.create({ email: req.query.e });
+        console.log('New email appended to our list :)');
+        return res.json({ success: true, error: false });
       })
       .catch(error => {
-        console.log('error', error);
+        console.log('.add()', error);
         return res.json({
           error: 'Error saving email! Please contact support@puro.com',
           success: false,
