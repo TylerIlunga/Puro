@@ -22,15 +22,13 @@ const Op = Sequelize.Op;
 const Entry = db.Entry;
 
 /**
- * getDataToUpdate
- *
  * Organizes the request's body into a Data Structure for
  * the database to interpret and update values in Campaign's
  * table.
  * @param {Object} body
  * @returns {?Object}
  */
-const getDataToUpdate = body => {
+const getDataToUpdate = (body) => {
   if (body.email && body.age) {
     return {
       email: body.email,
@@ -64,11 +62,11 @@ module.exports = {
       limit: req.query.limit,
       order: [['created_at', 'DESC']],
     })
-      .then(entries => {
+      .then((entries) => {
         console.log('entries', entries);
         res.json({ entries, success: true, error: null });
       })
-      .catch(_ => {
+      .catch((_) => {
         res.json({
           error: "Error fetching the given campaign's entries",
           entries: null,
@@ -101,12 +99,12 @@ module.exports = {
     }
     console.log('populating database...');
     Promise.all(entryCreations)
-      .then(_ => {
+      .then((_) => {
         console.log('entries created!');
         console.timeEnd('Total Duration');
         return res.json({ success: true, error: null });
       })
-      .catch(error => {
+      .catch((error) => {
         console.log('.create() error', error);
         return res.json({
           error: 'Error persisting  entries.',
@@ -149,8 +147,8 @@ module.exports = {
 
     entry
       .update(updatedData)
-      .then(_ => res.json({ success: true, error: null }))
-      .catch(error => {
+      .then((_) => res.json({ success: true, error: null }))
+      .catch((error) => {
         console.log('update() error', error);
         res.json({
           error: 'Error updating this entry.',
@@ -179,8 +177,8 @@ module.exports = {
 
     entry
       .destroy()
-      .then(_ => res.json({ success: true, error: null }))
-      .catch(error => {
+      .then((_) => res.json({ success: true, error: null }))
+      .catch((error) => {
         console.log('.destroy() error', error);
         return res.json({
           error: 'Error deleting entry, please contact support@puro.com',

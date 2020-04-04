@@ -2,8 +2,8 @@
  *  File name     :  ./controllers/Puro
  *  Purpose       :  Module for the Puro service.
  *  Author        :  Tyler Ilunga
- *  Date          :  2020-03-25
- *  Description   :  Module that holds all of the services for the shareable Puro link.
+ *  Date          :  2020-04-03
+ *  Description   :  Module that holds all of the services for the Puro (campaign-tracking) link.
  *                   Includes the following:
  *                   analyze()
  *                   fetchLink()
@@ -22,10 +22,8 @@ const Puro = db.Puro;
 
 module.exports = {
   /**
-   * analyze[GET]
-   * Detects which campaign the consumer is participating,
-   * assembles the redirect_uri to contain important analytical
-   * information, and redirects the consumer to the oauth endpoint.
+   * Detects which campaign the consumer is interacting with,
+   * assembles the redirect_uri, and redirects the consumer complete authentication.
    */
   analyze(req, res) {
     if (
@@ -33,6 +31,7 @@ module.exports = {
     ) {
       return res.json({ error: 'Invalid link.', success: false });
     }
+
     const campaign_id = req.query.c;
     const pid = req.query.p;
     const user_id = req.query.a;
@@ -43,20 +42,19 @@ module.exports = {
         [Op.and]: [{ campaign_id }, { campaign_tag: pid }],
       },
     })
-      .then(company => {
+      .then((company) => {
         if (!company) {
           return res.json({
             error: 'Company not found! Please contact support@puro.com',
             success: false,
           });
         }
-        const { name, puro_id } = company.dataValues;
         res.redirect(
-          `${base}/api/oauth/${name}?c=${campaign_id}&p=${puro_id}&a=${user_id}&r=${redirect_uri}`,
+          `${base}/api/oauth/${company.dataValues.name}?c=${campaign_id}&p=${company.dataValues.puro_id}&a=${user_id}&r=${redirect_uri}`,
         );
       })
-      .catch(error => {
-        console.log('error', error);
+      .catch((error) => {
+        console.log('.findOne()', error);
         return res.json({
           error: 'Error fetching company! Please contact support@puro.com',
           success: false,
@@ -64,21 +62,17 @@ module.exports = {
       });
   },
   /**
-   * fetchLink[GET]
-   * Returns the [Puro*for now*] link to the current user for
-   * a specified campaign.
+   * Returns the Puro (campaign-tracking) link
+   * to the current user for a specified campaign.
    */
   fetchLink(req, res) {
     if (!(req.query && req.query.cid)) {
       return res.json({ error: 'Missing fields.', success: false });
     }
     Puro.findOne({ where: { campaign_id: req.query.cid } })
-      .then(puro => {
-        console.log('Puro.findOne() puro:::', puro);
-        return res.json({ link: puro.dataValues.link, error: false });
-      })
-      .catch(error => {
-        console.log('Puro.findOne error:::', error);
+      .then((puro) => res.json({ link: puro.dataValues.link, error: false }))
+      .catch((error) => {
+        console.log('.findOne() error:::', error);
         return res.json({
           error: 'Error fetching puro link. Contact support.',
           success: false,
