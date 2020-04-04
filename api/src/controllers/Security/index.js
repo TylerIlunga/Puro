@@ -2,8 +2,8 @@
  *  File name     :  ./controllers/Security
  *  Purpose       :  Module for the Security service.
  *  Author        :  Tyler Ilunga
- *  Date          :  2020-03-25
- *  Description   :  Module that holds all of the services for "Security".
+ *  Date          :  2020-04-03
+ *  Description   :  Module that holds all of the services for "Security" located within the site's dashboard.
  *                   Includes the following:
  *                   enableTFA()
  *                   verifyQrCode()
@@ -26,30 +26,32 @@ let tfaMap = {};
 
 module.exports = {
   /**
-   * enableTFA[GET]
    * Commences the TFA enabling process by generating and sending out
-   * the QR Code needed for apps like Google Authenticator and a
-   * backup token in case they can not authenticate via Google Authenticator
-   * after enabling TFA.
+   * the QR Code needed for apps like Google Authenticator and backup token
+   * in case they can not authenticate via Google Authenticator after enabling TFA.
+   * @param {Object} req
+   * @param {Object} res
    */
   enableTFA(req, res) {
     if (!(req.query && req.query.email)) {
       return res.json({ error: 'Missing fields.', success: false });
     }
+
     const secret = speakeasy.generateSecretASCII();
     const backupToken = crypto
       .createHash('sha1')
       .update(secret)
       .digest('base64');
+
     tfaMap.secret = secret;
     tfaMap.backupToken = backupToken;
-    console.log('tfaMap', tfaMap);
+
     const otpauth_url = speakeasy.otpauthURL({
       secret,
       label: req.query.email,
       issuer: 'Puro',
     });
-    console.log('otpauth_url', otpauth_url);
+
     QRCode.toDataURL(otpauth_url, (err, dataUrl) => {
       if (err) {
         return res.json({
@@ -57,7 +59,6 @@ module.exports = {
           success: false,
         });
       }
-      console.log('dataUrl', dataUrl);
       return res.json({
         backupToken,
         QRCodeImageUrl: dataUrl,
@@ -66,10 +67,11 @@ module.exports = {
     });
   },
   /**
-   * verifyQrCode[POST]
-   * Verifies whether or not the user scanned the QR Code generated above
-   * and provided the correct token generated via apps like Google Authenticator.
-   * If valid, enable TFA for the current user's account.
+   * Verifies whether or not the user scanned the QR
+   * Code generated above and provided the correct token generated
+   * via apps like Google Authenticator. If valid, enable TFA for the current user's account.
+   * @param {Object} req
+   * @param {Object} res
    */
   async verifyQrCode(req, res) {
     if (
@@ -83,15 +85,13 @@ module.exports = {
     ) {
       return res.json({ error: 'Missing fields.', success: false });
     }
-    console.log('tfaMap', tfaMap);
+
     const isValidToken = speakeasy.totp.verify({
       secret: tfaMap.secret,
       encoding: 'ascii',
       token: req.body.token,
     });
-    console.log('isValidToken', isValidToken);
     const isValidBackupToken = tfaMap.backupToken === req.body.backupToken;
-    console.log('isValidBackupToken', isValidBackupToken);
     if (!isValidToken || !isValidBackupToken) {
       return res.json({ error: 'Invalid token.', success: false });
     }
@@ -113,28 +113,26 @@ module.exports = {
         two_factor_secret: tfaMap.secret,
         two_factor_backup: tfaMap.backupToken,
       })
-      .then(result => {
-        console.log('User.update() result:', result);
+      .then((_) => {
         tfaMap.secret = null;
         tfaMap.backupToken = null;
         delete tfaMap.secret;
         delete tfaMap.backupToken;
         tfaMap = null;
-        return res.json({ success: true, error: false });
+        res.json({ success: true, error: false });
       })
-      .catch(error => {
-        console.log('User.update() error');
-        return res.json({ error: 'Error updating user data:', success: false });
+      .catch((error) => {
+        console.log('.update() error', error);
+        res.json({ error: 'Error updating user data:', success: false });
       });
   },
   /**
-   * verifyBackupToken[POST]
-   * Verifies supplied backup token from enableTFA() if the current user
-   * can not access apps like Google Authenticator app but they remember
-   * their backup token.
+   * Verifies the supplied backup token from enableTFA(). For users that
+   * can not access apps like the Google Authenticator app but they remember their backup token.
+   * @param {Object} req
+   * @param {Object} res
    */
   async verifyBackupToken(req, res) {
-    // NOTE: logs user in, but user must go through the process again of enabling TFA.
     if (
       !(
         req.query &&
@@ -171,24 +169,21 @@ module.exports = {
 
         const isValidBackupToken =
           user.dataValues.two_factor_backup === req.body.backupToken;
-        console.log('isValidBackupToken', isValidBackupToken);
         if (!isValidBackupToken) {
           return res.json({ error: 'Invalid token.', success: false });
         }
+
         user
           .update({
             two_factor_enabled: false,
             two_factor_secret: null,
             two_factor_backup: null,
           })
-          .then(result => {
-            console.log('user.update() result:', result);
-            return res.json({ success: true, error: false });
-          })
-          .catch(error => {
-            console.log('user.update() error');
-            return res.json({
-              error: 'Error updating user data:',
+          .then((_) => res.json({ success: true, error: false }))
+          .catch((error) => {
+            console.log('.update() error', error);
+            res.json({
+              error: 'Error updating given account.',
               success: false,
             });
           });
@@ -196,8 +191,9 @@ module.exports = {
     );
   },
   /**
-   * disableTFA[PUT]
-   * Disables TFA for the User.
+   * Disables TFA for the current user.
+   * @param {Object} req
+   * @param {Object} res
    */
   async disableTFA(req, res) {
     if (
@@ -211,6 +207,7 @@ module.exports = {
     ) {
       return res.json({ error: 'Missing fields.', success: false });
     }
+
     const user = await User.findOne({
       attributes: ['id', 'password', 'two_factor_secret', 'two_factor_enabled'],
       where: { id: req.query.uid },
@@ -237,7 +234,6 @@ module.exports = {
           encoding: 'ascii',
           token: req.body.token,
         });
-        console.log('isValidToken', isValidToken);
         if (!isValidToken) {
           return res.json({ error: 'Invalid token.', success: false });
         }
@@ -248,13 +244,10 @@ module.exports = {
             two_factor_secret: null,
             two_factor_backup: null,
           })
-          .then(result => {
-            console.log('user.update() result:', result);
-            return res.json({ success: true, error: false });
-          })
-          .catch(error => {
-            console.log('user.update() error');
-            return res.json({
+          .then((_) => res.json({ success: true, error: false }))
+          .catch((error) => {
+            console.log('user.update() error', error);
+            res.json({
               error: 'Error updating user data:',
               success: false,
             });

@@ -25,6 +25,8 @@ module.exports = {
   /**
    * Gathers current user's remittance data, if the user
    * would like to view their Credit Card / Bank Account on file (Stripe).
+   * @param {Object} req
+   * @param {Object} res
    */
   async review(req, res) {
     if (!(req.query.user_id && req.body && req.body.password)) {
@@ -89,6 +91,8 @@ module.exports = {
    * Creates a new stripe customer account within our system
    * for the current user and stores their customer id
    * for future remittance operations.
+   * @param {Object} req
+   * @param {Object} res
    */
   async create(req, res) {
     if (!(req.query.user_id && req.body && req.body.stripe_token)) {
@@ -146,6 +150,8 @@ module.exports = {
   },
   /**
    * Updates payment information both within our system and stripe's system.
+   * @param {Object} req
+   * @param {Object} res
    */
   async update(req, res) {
     if (!(req.query.user_id && req.body && req.body.stripe_token)) {

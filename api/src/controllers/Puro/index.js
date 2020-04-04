@@ -24,6 +24,8 @@ module.exports = {
   /**
    * Detects which campaign the consumer is interacting with,
    * assembles the redirect_uri, and redirects the consumer complete authentication.
+   * @param {Object} req
+   * @param {Object} res
    */
   analyze(req, res) {
     if (
@@ -64,6 +66,8 @@ module.exports = {
   /**
    * Returns the Puro (campaign-tracking) link
    * to the current user for a specified campaign.
+   * @param {Object} req
+   * @param {Object} res
    */
   fetchLink(req, res) {
     if (!(req.query && req.query.cid)) {
