@@ -16,79 +16,82 @@
  *  Exceptions    :  N/A
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-const { stripeKey } = require('../../config');
+const { stripeKey, subscriptions } = require('../../config');
 const stripe = require('stripe')(stripeKey);
 const db = require('../../db');
 const User = db.User;
 const Remittance = db.Remittance;
-const subscriptionsTypes = ['seed', 'standard', 'scale'];
+const subscriptionsTypes = Object.keys(subscriptions);
 
 /**
  * getAmountFromPlan
  * @param {Number} plan
  */
-const getAmountFromPlan = plan => {
+const getAmountFromPlan = (plan) => {
   switch (plan) {
     case 'seed':
-      return 2500; // $25
+      return subscriptions.seed.rate; // $25
     case 'standard':
-      return 5000; // $50
+      return subscriptions.standard.rate; // $50
     case 'scale':
-      return 10000; // $100
+      return subscriptions.scale.rate; // $100
   }
 };
 
-// NOTE: Handle generated coupons
-// (SPRING25: 25% off of Standard Plan for the first 2 months).
+// NOTE: Full-fleshed out project would handle generated coupons for discounts
+// such as "SPRING25": 25% off of Standard Plan for the first 2 months or something like that.
 
 module.exports = {
   /**
-   * fetch[GET]
-   * Fetches current subscription information from Stripe for
-   * the current user.
+   * Fetches information from Stripe on the current user's subscription.
+   * @param {Object} req
+   * @param {Object} res
    */
   async fetch(req, res) {
     if (!(req.query && req.query.uid)) {
       return res.json({ error: 'Missing fields.', success: false });
     }
+
     const remittance = await Remittance.findOne({
       where: { user_id: req.query.uid },
     });
     if (!remittance) {
       return res.json({ error: 'No Stripe Account on file.', success: false });
     }
-    console.log('remittance::::', remittance);
     if (!remittance.dataValues.sub_id) {
       return res.json({
         error: 'No subscription found on file.',
         success: false,
       });
     }
-    const subId = remittance.dataValues.sub_id;
-    stripe.subscriptions.retrieve(subId, (err, subscription) => {
-      if (err) {
-        return res.json({
-          error: 'Invalid Subscription ID. Contact support.',
-          success: false,
+
+    stripe.subscriptions.retrieve(
+      remittance.dataValues.sub_id,
+      (error, subscription) => {
+        if (error) {
+          console.log('stripe.subscriptions.retrieve() error:', error);
+          return res.json({
+            error: 'Invalid Subscription ID. Contact support.',
+            success: false,
+          });
+        }
+        res.json({
+          subscriptionDetails: {
+            active: true,
+            plan: subscription.metadata.plan
+              ? subscription.metadata.plan
+              : subscription.plan.metadata.plan,
+          },
+          success: true,
+          error: false,
         });
-      }
-      console.log('subscription', subscription);
-      return res.json({
-        subscriptionDetails: {
-          active: true,
-          plan: subscription.metadata.plan
-            ? subscription.metadata.plan
-            : subscription.plan.metadata.plan,
-        },
-        success: true,
-        error: false,
-      });
-    });
+      },
+    );
   },
   /**
-   * create[GET]
-   * Creates a new subscription plan on Stripe for the current
-   * user.
+   * Creates a new subscription plan via Stripe for the current user.
+   * @param {Object} req
+   * @param {Object} res
    */
   async create(req, res) {
     if (!(req.query && req.query.plan && req.query.uid)) {
@@ -109,8 +112,6 @@ module.exports = {
       return res.json({ error: "Account doesn't exists.", success: false });
     }
 
-    console.log('user::::', user);
-
     const remittance = await Remittance.findOne({
       attributes: ['id', 'sid'],
       where: { user_id: user.dataValues.id },
@@ -122,14 +123,12 @@ module.exports = {
       });
     }
 
-    console.log('remittance::::', remittance);
-
     stripe.plans.create(
       {
         amount: getAmountFromPlan(req.query.plan),
-        interval: 'month',
+        interval: subscriptions.chargeInterval,
         product: { name: req.query.plan },
-        currency: 'usd',
+        currency: subscriptions.chargeCurrency,
         metadata: { plan: req.query.plan },
       },
       (pErr, plan) => {
@@ -144,7 +143,7 @@ module.exports = {
           {
             customer: remittance.dataValues.sid,
             items: [{ plan: plan.id }],
-            tax_percent: 9.5,
+            tax_percent: subscriptions.salesTax,
           },
           (sErr, subscription) => {
             if (sErr) {
@@ -154,13 +153,12 @@ module.exports = {
                 success: false,
               });
             }
-            console.log('success updating customer info!');
             Promise.all([
               remittance.update({ sub_id: subscription.id }),
               user.update({ subscription: req.query.plan }),
             ])
-              .then(result => {
-                return res.json({
+              .then((_) => {
+                res.json({
                   subscriptionDetails: {
                     active: true,
                     plan: req.query.plan,
@@ -169,8 +167,9 @@ module.exports = {
                   error: false,
                 });
               })
-              .catch(error => {
-                return res.json({
+              .catch((error) => {
+                console.log('Remittance and/or user update error:', error);
+                res.json({
                   error:
                     'Error updating account, please contact support@puro.com',
                   success: false,
@@ -182,9 +181,9 @@ module.exports = {
     );
   },
   /**
-   * update[GET]
-   * Updates the current subscription plan on Stripe for the
-   * current user.
+   * Updates the current subscription plan on Stripe for the current user.
+   * @param {Object} req
+   * @param {Object} res
    */
   async update(req, res) {
     if (!(req.query && req.query.plan && req.query.uid)) {
@@ -194,29 +193,25 @@ module.exports = {
       return res.json({ error: 'Invalid subscription type.', success: false });
     }
 
-    //req.query.uid
-    const user = await User.findOne({ where: { id: 1 } });
+    const user = await User.findOne({ where: { id: req.query.uid } });
     if (!user) {
       return res.json({ error: "Account doesn't exists.", success: false });
     }
 
-    console.log('user::::', user);
-
     const remittance = await Remittance.findOne({
       attributes: ['id', 'sub_id'],
-      where: { user_id: user.dataValues.id }, // req.query.uid
+      where: { user_id: user.dataValues.id },
     });
     if (!(remittance && remittance.sub_id)) {
       return res.json({ error: 'No subscription to update.', success: false });
     }
-    console.log('remittance::::', remittance);
 
     stripe.plans.create(
       {
         amount: getAmountFromPlan(req.query.plan),
-        interval: 'month',
+        interval: subscriptions.chargeInterval,
         product: { name: req.query.plan },
-        currency: 'usd',
+        currency: subscriptions.chargeCurrency,
       },
       (pErr, plan) => {
         if (pErr) {
@@ -231,8 +226,8 @@ module.exports = {
           remittance.sub_id,
           {
             items: [{ plan: plan.id }],
-            tax_percent: 9.5,
-            prorate: true, // NOTE: review
+            tax_percent: subscriptions.salesTax,
+            prorate: subscriptions.prorate,
             metadata: { plan: req.query.plan },
           },
           (sErr, subscription) => {
@@ -243,14 +238,12 @@ module.exports = {
                 success: false,
               });
             }
-            console.log('success updating customer info!');
-            console.log('update() subscription', subscription);
             Promise.all([
               remittance.update({ sub_id: subscription.id }),
               user.update({ subscription: req.query.plan }),
             ])
-              .then(result => {
-                return res.json({
+              .then((_) => {
+                res.json({
                   subscriptionDetails: {
                     active: true,
                     plan: req.query.plan,
@@ -259,9 +252,9 @@ module.exports = {
                   error: false,
                 });
               })
-              .catch(error => {
-                console.log('update() Promise.all error()', error);
-                return res.json({
+              .catch((error) => {
+                console.log('Remittance and/or user update error:', error);
+                res.json({
                   error:
                     'Error updating account, please contact support@puro.com',
                   success: false,
@@ -273,21 +266,22 @@ module.exports = {
     );
   },
   /**
-   * cancel[GET]
-   * Cancels the current subscription plan on Stripe for
-   * the current user.
+   * Cancels the current subscription plan on Stripe for the current user.
+   * @param {Object} req
+   * @param {Object} res
    */
   async cancel(req, res) {
     if (!(req.query && req.query.uid)) {
       return res.json({ error: 'Missing fields.', success: false });
     }
+
     const user = await User.findOne({
-      where: { id: 1 }, //req.query.uid
+      where: { id: req.query.uid },
     });
     if (!user) {
       return res.json({ error: "Account doesn't exists.", success: false });
     }
-    // NOTE: user should only have one stripe account so use req.query.uid
+
     const remittance = await Remittance.findOne({
       attributes: ['id', 'sub_id'],
       where: { user_id: req.query.uid },
@@ -295,8 +289,6 @@ module.exports = {
     if (!(remittance && remittance.sub_id)) {
       return res.json({ error: 'No subscription to delete.', success: false });
     }
-
-    console.log('remittance::::', remittance);
 
     stripe.subscriptions.del(remittance.sub_id, (err, confirmation) => {
       if (err) {
@@ -306,16 +298,15 @@ module.exports = {
           success: false,
         });
       }
-      console.log('canceled subscription');
+      console.log('User canceled their subscription :(');
       Promise.all([
         remittance.update({ sub_id: null }),
         user.update({ subscription: 'free' }),
       ])
-        .then(result => {
-          return res.json({ success: true, error: false });
-        })
-        .catch(error => {
-          return res.json({
+        .then((_) => res.json({ success: true, error: false }))
+        .catch((error) => {
+          console.log('Remittance and/or user update error:', error);
+          res.json({
             error: 'Error updating account, please contact support@puro.com',
             success: false,
           });

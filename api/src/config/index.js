@@ -20,10 +20,25 @@ module.exports = {
   jwt: {
     J_SECRET: process.env.JWT_SECRET || '#*@&*#@kjscdjk@(*#z',
   },
+  port: process.env.PORT || 1111,
   session: {
     S_SECRET: process.env.SESSION_SECRET || 'dfkjsdbvakjdbnj',
   },
-  port: process.env.PORT || 1111,
   stripeKey: process.env.STRIPE_KEY || 'sk_test_10AtRvNhtm1UD0jjoCD5mLS2',
+  subscriptions: {
+    chargeInterval: 'month',
+    chargeCurrency: 'usd',
+    prorate: true,
+    salesTax: 7.25,
+    seed: {
+      rate: 2500, // $25
+    },
+    standard: {
+      rate: 5000, // $50
+    },
+    scale: {
+      rate: 10000, // $100
+    },
+  },
   web_base: process.env.WEB_BASE || 'http://localhost:3000',
 };
