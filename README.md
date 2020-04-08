@@ -1,7 +1,9 @@
 ### Puro
 
-Old side project I was working on to learn more that allows users to create link campaigns and view simple stats based on user interactions with the generated link.
+Old side project I was working on to expand my knowledge base.
 
-Currently, cleaning up codebase for presentation.
+Puro allows users to create link campaigns and view simple stats based on interaction with the generated link.
 
-Description and setup coming soon.
+Currently, cleaning up codebase for official presentation due to only working on it by myself during some free moments I had during 2019.
+
+Description and setup coming soon as well.
