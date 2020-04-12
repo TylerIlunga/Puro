@@ -24,12 +24,12 @@ const User = db.User;
 let account = null;
 
 /**
- * handleCallbackError
- *
  * Organize's Facebook's Error and sends it as a response.
+ * @param {Object} res
+ * @param {Object} res
  */
 const handleCallbackError = (req, res) => {
-  return res.json({
+  res.json({
     error: {
       errorMessage: req.query.error,
       errorCode: req.query.error_code,
@@ -40,10 +40,30 @@ const handleCallbackError = (req, res) => {
   });
 };
 
+/**
+ *
+ */
+const gatherMetadata = (req, res, facebookData, access_token, entry) => {
+  res.redirect(account.redirect_uri);
+  console.log('Gathering metadata needed for future data-driven decisions...');
+  const analyticalLog = {
+    ...facebookData,
+    access_token,
+    campaign_id: account.campaign_id,
+    ip: req.ip,
+    puro_id: account.puro_id,
+    link: account.redirect_uri,
+  };
+  account['entry_id'] = entry.dataValues.id;
+  console.log('analyticalLog', analyticalLog);
+  gatherAnalytics(req, account, analyticalLog, 'facebook');
+};
+
 module.exports = {
   /**
-   * oauth[GET]
    * Redirects current user to Facebook's authentication view.
+   * @param {Object} res
+   * @param {Object} res
    */
   oauth(req, res) {
     account = {
@@ -52,23 +72,21 @@ module.exports = {
       user_id: req.query.a,
       redirect_uri: req.query.r,
     };
-    // console.log('account::::', account);
-    return res.redirect(
+    res.redirect(
       FB.getLoginUrl({
         client_id: config.facebook.client_id,
         scope: config.facebook.scopes.dev,
         redirect_uri: config.facebook.redirect_uri,
       }),
     );
-    // res.json({authorizeURL});
   },
   /**
-   * callback[GET]
-   * Gathers current user's data allowed by Github, organizes that data,
-   * and stores it for future analysis.
+   * Gathers current user's data allowed by Facebook,
+   * organizes that data, handles link (entry) activity, and stores it for future analysis.
+   * @param {Object} res
+   * @param {Object} res
    */
   callback(req, res) {
-    // console.log('req.query', req.query);
     if (!account) {
       return res.json({ error: 'OAuth required!', success: false });
     }
@@ -83,7 +101,7 @@ module.exports = {
         redirect_uri: config.facebook.redirect_uri,
         code: req.query.code,
       },
-      oAuthRes => {
+      (oAuthRes) => {
         if (!oAuthRes || oAuthRes.error) {
           console.log('oAuthRes.error:::', oAuthRes.error);
           return res.json({
@@ -93,50 +111,43 @@ module.exports = {
         }
         console.log('oAuthRes', oAuthRes);
         const access_token = oAuthRes.access_token;
-        // const refresh_token = oAuthRes.refresh_token;
-        // NOTE: will update based on app review decision!
         FB.api(
           'me',
           { access_token, fields: config.facebook.fields.profile },
-          async fData => {
+          async (fData) => {
             const facebookData = fData;
-            console.log('personal FB DATA:::::', facebookData);
             const userEntry = await Entry.findOne({
               where: { company_id: facebookData.id },
             });
-            // if (userEntry) {
-            //   console.log('entry exists:::::', userEntry);
-            //   return userEntry
-            //     .update({ clicks: userEntry.dataValues.clicks + 1 })
-            //     .then(result => res.redirect(account.redirect_uri))
-            //     .catch(error => {
-            //       console.log('userEntry.update() error', error);
-            //       // return res.json({ error: "Error updating clicks count!", success: false });
-            //       return res.redirect(account.redirect_uri);
-            //     });
-            // }
+            if (userEntry) {
+              console.log('entry exists:::::', userEntry);
+              return userEntry
+                .update({ clicks: userEntry.dataValues.clicks + 1 })
+                .then((_) => {
+                  gatherMetadata(
+                    req,
+                    res,
+                    facebookData,
+                    access_token,
+                    userEntry.dataValues,
+                  );
+                })
+                .catch((error) => {
+                  console.log('userEntry.update() error', error);
+                  res.redirect(account.redirect_uri);
+                });
+            }
             Entry.create({
               company_id: facebookData.id,
               email: facebookData.email,
               campaign_id: account.campaign_id,
             })
-              .then(async entry => {
-                console.log('success saving entry', entry);
-                console.log('account.redirect_uri:', account.redirect_uri);
-                res.redirect(account.redirect_uri);
-                const analyticalLog = {
-                  ...facebookData,
-                  access_token,
-                  campaign_id: account.campaign_id,
-                  ip: req.ip,
-                  puro_id: account.puro_id,
-                  link: account.redirect_uri,
-                };
-                account['entry_id'] = entry.dataValues.id;
-                console.log('analyticalLog', analyticalLog);
-                gatherAnalytics(req, account, analyticalLog, 'facebook');
+              .then(async (entry) => {
+                console.log('Success saving new entry:', entry);
+                console.log('Async redirect to campaign destination.');
+                gatherMetadata(req, res, facebookData, access_token, entry);
               })
-              .catch(error => {
+              .catch((error) => {
                 console.log('Entry.create() error', error);
               });
           },

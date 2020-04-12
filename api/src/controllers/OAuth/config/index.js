@@ -1,6 +1,25 @@
+/** ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *  File name     :  ./controllers/Linking
+ *  Purpose       :  Genernal configuration for OAUTH operations
+ *  Author        :  Tyler Ilunga
+ *  Date          :  2020-03-31
+ *  Description   :  This module provides general configuration for the OAUTH service.
+ *                   broadcastChannel()
+ *
+ *  Notes         :  0
+ *  Warnings      :  None
+ *  Exceptions    :  N/A
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
 const { base } = require('../../../config');
 
-const broadcastChannel = msg => {
+/**
+ * Returns the script needed for the browser to handle required logic generated
+ * as an event in the pop out windows from the OAUTH service.
+ *
+ * @param {Object} browserMsg
+ */
+const broadcastChannel = (browserMsg) => {
   return `<script>
     (function(global) {
       var channels = [];
@@ -80,7 +99,9 @@ const broadcastChannel = msg => {
       global.BroadcastChannel = global.BroadcastChannel || BroadcastChannel;
       }(self));
       let bc = new BroadcastChannel('channel');
-      window.opener.postMessage('${JSON.stringify(msg)}', '*'); /* send */
+      window.opener.postMessage('${JSON.stringify(
+        browserMsg,
+      )}', '*'); /* send */
       window.close();
     </script>
   `;
