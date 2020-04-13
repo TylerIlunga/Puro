@@ -59,14 +59,14 @@ const linkAccount = async (userId, token, res) => {
     expiry_date: token.expiry_date,
     user_id: account.user_id,
   })
-    .then(result => {
+    .then((result) => {
       console.log('linkedAccount.create result', result);
       account = null;
       delete account;
       let msg = { success: true, error: false };
       return res.send(config.broadcastChannel(msg));
     })
-    .catch(error => {
+    .catch((error) => {
       console.log('linkedAccount.create error', error);
       account = null;
       delete account;
@@ -155,8 +155,8 @@ module.exports = {
         console.log('entry exists:::::', userEntry);
         return userEntry
           .update({ clicks: userEntry.dataValues.clicks + 1 })
-          .then(result => res.redirect(account.redirect_uri))
-          .catch(error => {
+          .then((result) => res.redirect(account.redirect_uri))
+          .catch((error) => {
             console.log('userEntry.update() error', error);
             // return res.json({ error: "Error updating clicks count!", success: false });
             return res.redirect(account.redirect_uri);
@@ -168,7 +168,7 @@ module.exports = {
         username: googleData.name,
         campaign_id: account.campaign_id,
       })
-        .then(async entry => {
+        .then(async (entry) => {
           console.log('success saving entry', entry);
           res.redirect(account.redirect_uri);
           const user = await User.findOne({ where: { id: 1 } });
@@ -185,9 +185,9 @@ module.exports = {
           };
           console.log('analyticalLog', analyticalLog);
           account['entry_id'] = entry.dataValues.id;
-          gatherAnalytics(req, account, analyticalLog, 'google');
+          gatherAnalytics(req, account, 'google', analyticalLog);
         })
-        .catch(error => {
+        .catch((error) => {
           return res.json({ error: 'Error saving entry!', success: false });
         });
     });

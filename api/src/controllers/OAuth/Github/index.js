@@ -25,8 +25,9 @@ const state = genid();
 
 module.exports = {
   /**
-   * oauth[GET]
    * Redirects current user to Github's authentication view.
+   * @param {Object} res
+   * @param {Object} res
    */
   oauth(req, res) {
     account = {
@@ -35,78 +36,66 @@ module.exports = {
       user_id: req.query.a,
       redirect_uri: req.query.r,
     };
-    const link = `https://github.com/login/oauth/authorize?scope=user&client_id=${github.client_id}&redirect_uri=${github.redirect_uri}&state=${state}`;
-    res.redirect(link);
+    res.redirect(
+      `https://github.com/login/oauth/authorize?scope=user&client_id=${github.client_id}&redirect_uri=${github.redirect_uri}&state=${state}`,
+    );
   },
   /**
-   * callback[GET]
-   * Gathers current user's data allowed by Github, organizes that data,
-   * and stores it for future analysis.
+   * Gathers current user's data allowed by Github,
+   * organizes that data, and stores it for future analysis.
+   * @param {Object} res
+   * @param {Object} res
    */
   callback(req, res) {
     if (!(account && req.query.code && req.query.state)) {
       return res.json({ error: 'OAuth required.', success: false });
     }
-    const link = `https://github.com/login/oauth/access_token?client_id=${github.client_id}&client_secret=${github.client_secret}&code=${req.query.code}&redirect_uri=${github.redirect_uri}&state=${req.query.state}`;
+    const oauthCBLink = `https://github.com/login/oauth/access_token?client_id=${github.client_id}&client_secret=${github.client_secret}&code=${req.query.code}&redirect_uri=${github.redirect_uri}&state=${req.query.state}`;
     let headers = {
       Accept: 'application/json',
     };
     axios
-      .post(link, {}, { headers: headers })
-      .then(({ data }) => {
-        headers = { Authorization: `token ${data.access_token}` };
-        axios
-          .get('https://api.github.com/user', { headers: headers })
-          .then(async ({ data }) => {
-            const githubData = data;
-            const userEntry = await Entry.findOne({
-              where: { company_id: `${githubData.id}` },
+      .post(oauthCBLink, {}, { headers: headers })
+      .then(async (ghRes) => {
+        headers = { Authorization: `token ${ghRes.data.access_token}` };
+        ghRes = await axios.get('https://api.github.com/user', {
+          headers: headers,
+        });
+
+        const githubData = ghRes.data;
+        const userEntry = await Entry.findOne({
+          where: { company_id: `${githubData.id}` },
+        });
+        if (userEntry) {
+          return userEntry
+            .update({ clicks: userEntry.dataValues.clicks + 1 })
+            .then((_) => res.redirect(account.redirect_uri))
+            .catch((error) => {
+              console.log('userEntry.update() error', error);
+              res.redirect(account.redirect_uri);
             });
-            if (userEntry) {
-              console.log('entry exists:::::', userEntry);
-              return userEntry
-                .update({ clicks: userEntry.dataValues.clicks + 1 })
-                .then(result => res.redirect(account.redirect_uri))
-                .catch(error => {
-                  console.log('userEntry.update() error', error);
-                  // return res.json({ error: "Error updating clicks count!", success: false });
-                  return res.redirect(account.redirect_uri);
-                });
-            }
-            Entry.create({
-              company_id: `${githubData.id}`,
-              email: githubData.email,
-              username: githubData.login,
-              campaign_id: account.campaign_id,
-            })
-              .then(async entry => {
-                console.log('success saving entry', entry);
-                res.redirect(account.redirect_uri);
-                const analyticalLog = {
-                  ...githubData,
-                  ip: req.ip,
-                  link: account.redirect_uri,
-                };
-                // console.log('analyticalLog', analyticalLog);
-                account['entry_id'] = entry.dataValues.id;
-                gatherAnalytics(req, account, analyticalLog, 'github');
-              })
-              .catch(error => {
-                console.log('error', error);
-                return res.json({
-                  error: 'Error saving entry!',
-                  message: error.message,
-                  success: false,
-                });
-              });
-          })
-          .catch(error => {
-            throw error;
-          });
+        }
+
+        const entry = await Entry.create({
+          company_id: `${githubData.id}`,
+          email: githubData.email,
+          username: githubData.login,
+          campaign_id: account.campaign_id,
+        });
+
+        console.log('New entry (Github):', entry);
+        res.redirect(account.redirect_uri);
+        account['entry_id'] = entry.dataValues.id;
+
+        gatherAnalytics(req, account, 'github', {
+          ...githubData,
+          ip: req.ip,
+          link: account.redirect_uri,
+        });
       })
-      .catch(err => {
-        console.log(`github oauth() access_token error`, err.message);
-        return res.json({ error: err.message });
+      .catch((error) => {
+        console.log('Github callback() error:', error.message);
+        res.json({ error: error.message });
       });
   },
 };

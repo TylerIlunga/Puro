@@ -37,7 +37,7 @@ var client = new twitterAPI({
  * checkForDescriptionUrl
  * @param {Object} entities
  */
-const checkForDescriptionUrl = entities => {
+const checkForDescriptionUrl = (entities) => {
   console.log('checkForDescriptionUrl() entities', entities);
   if (
     entities &&
@@ -124,8 +124,8 @@ module.exports = {
               console.log('entry exists:::::', entry);
               return entry
                 .update({ clicks: entry.dataValues.clicks + 1 })
-                .then(_ => res.redirect(account.redirect_uri))
-                .catch(error => {
+                .then((_) => res.redirect(account.redirect_uri))
+                .catch((error) => {
                   console.log('entry.update() error', error);
                   return res.redirect(account.redirect_uri);
                 });
@@ -137,7 +137,7 @@ module.exports = {
               username: twitterData.screen_name,
               campaign_id: account.campaign_id,
             })
-              .then(async entry => {
+              .then(async (entry) => {
                 console.log('success saving entry', entry);
                 res.redirect(account.redirect_uri);
                 // const user = await User.findOne({ id: account.user_id });
@@ -159,9 +159,9 @@ module.exports = {
                   link: account.redirect_uri,
                 };
                 account['entry_id'] = entry.dataValues.id;
-                gatherAnalytics(req, account, analyticalLog, 'twitter');
+                gatherAnalytics(req, account, 'twitter', analyticalLog);
               })
-              .catch(error => {
+              .catch((error) => {
                 console.log('Error saving entry:::::', error);
               });
           },

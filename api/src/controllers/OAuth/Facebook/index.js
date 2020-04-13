@@ -19,7 +19,6 @@ const { FB } = require('fb');
 const db = require('../../../db');
 const { gatherAnalytics } = require('../../../tools');
 const Entry = db.Entry;
-const User = db.User;
 
 let account = null;
 
@@ -42,21 +41,24 @@ const handleCallbackError = (req, res) => {
 
 /**
  *
+ * Utility method needed to initiated the process of
+ * gathering additional information for future analysis.
+ * @param {Object} req
+ * @param {Object} facebookData
+ * @param {String} access_token
+ * @param {Object} entry
  */
-const gatherMetadata = (req, res, facebookData, access_token, entry) => {
-  res.redirect(account.redirect_uri);
+const gatherMetadata = (entry, req, facebookData, access_token) => {
   console.log('Gathering metadata needed for future data-driven decisions...');
-  const analyticalLog = {
+  account['entry_id'] = entry.dataValues.id;
+  gatherAnalytics(req, account, 'facebook', {
     ...facebookData,
     access_token,
     campaign_id: account.campaign_id,
     ip: req.ip,
     puro_id: account.puro_id,
     link: account.redirect_uri,
-  };
-  account['entry_id'] = entry.dataValues.id;
-  console.log('analyticalLog', analyticalLog);
-  gatherAnalytics(req, account, analyticalLog, 'facebook');
+  });
 };
 
 module.exports = {
@@ -124,12 +126,12 @@ module.exports = {
               return userEntry
                 .update({ clicks: userEntry.dataValues.clicks + 1 })
                 .then((_) => {
+                  res.redirect(account.redirect_uri);
                   gatherMetadata(
+                    userEntry.dataValues,
                     req,
-                    res,
                     facebookData,
                     access_token,
-                    userEntry.dataValues,
                   );
                 })
                 .catch((error) => {
@@ -145,7 +147,8 @@ module.exports = {
               .then(async (entry) => {
                 console.log('Success saving new entry:', entry);
                 console.log('Async redirect to campaign destination.');
-                gatherMetadata(req, res, facebookData, access_token, entry);
+                res.redirect(account.redirect_uri);
+                gatherMetadata(entry, req, facebookData, access_token);
               })
               .catch((error) => {
                 console.log('Entry.create() error', error);

@@ -39,7 +39,7 @@ const TwitterAnalysis = db.TwitterAnalysis;
  * @param {string} clientIp
  * @return {Promise}
  */
-const analyzeIP = clientIp => {
+const analyzeIP = (clientIp) => {
   console.log('analyzeIP()');
   return new Promise((resolve, reject) => {
     ip2countrify.lookup(clientIp, (ip, results, error) => {
@@ -59,7 +59,7 @@ const analyzeIP = clientIp => {
  * @param {Object} req
  * @return {Promise}
  */
-const gatherWimbAnalytics = async req => {
+const gatherWimbAnalytics = async (req) => {
   console.log('gatherWimbAnalytics()');
   return new Promise(async (resolve, reject) => {
     const wimbData = await Wimb.parseUserAgentData(req.headers['user-agent']);
@@ -77,7 +77,7 @@ const gatherWimbAnalytics = async req => {
  * @param {Object} analyticalLog
  * @return {Promise}
  */
-const storeFacebookData = analyticalLog => {
+const storeFacebookData = (analyticalLog) => {
   console.log('storeFacebookData()', analyticalLog);
   return FacebookAnalysis.create({
     access_token: analyticalLog.access_token,
@@ -93,10 +93,10 @@ const storeFacebookData = analyticalLog => {
     campaign_id: analyticalLog.campaign_id,
     link: analyticalLog.link,
   })
-    .then(analysis => {
+    .then((analysis) => {
       console.log('success saving analysis', analysis);
     })
-    .catch(error => {
+    .catch((error) => {
       console.log('error saving analysis', error);
     });
 };
@@ -107,7 +107,7 @@ const storeFacebookData = analyticalLog => {
  * @param {Object} analyticalLog
  * @return {Promise}
  */
-const storeGoogleData = analyticalLog => {
+const storeGoogleData = (analyticalLog) => {
   console.log('storeGoogleData()');
   return GoogleAnalysis.create({
     email: analyticalLog.email,
@@ -130,10 +130,10 @@ const storeGoogleData = analyticalLog => {
     campaign_id: analyticalLog.campaign_id,
     link: analyticalLog.link,
   })
-    .then(analysis => {
+    .then((analysis) => {
       console.log('success saving analysis', analysis);
     })
-    .catch(error => {
+    .catch((error) => {
       console.log('error saving analysis', error);
     });
 };
@@ -144,7 +144,7 @@ const storeGoogleData = analyticalLog => {
  * @param {Object} analyticalLog
  * @return {Promise}
  */
-const storeGithubData = analyticalLog => {
+const storeGithubData = (analyticalLog) => {
   console.log('storeGithubData()');
   return GithubAnalysis.create({
     avatar_url: analyticalLog.avatar_url,
@@ -179,10 +179,10 @@ const storeGithubData = analyticalLog => {
     software_version: analyticalLog.software_version,
     operating_system: analyticalLog.operating_system,
   })
-    .then(analysis => {
+    .then((analysis) => {
       console.log('success saving analysis', analysis);
     })
-    .catch(error => {
+    .catch((error) => {
       console.log('error saving analysis', error);
     });
 };
@@ -193,13 +193,13 @@ const storeGithubData = analyticalLog => {
  * @param {Object} analyticalLog
  * @return {Promise}
  */
-const storeInstagramData = analyticalLog => {
+const storeInstagramData = (analyticalLog) => {
   console.log('storeInstagramData()');
   return InstagramAnalysis.create({ ...analyticalLog })
-    .then(analysis => {
+    .then((analysis) => {
       console.log('success saving analysis', analysis);
     })
-    .catch(error => {
+    .catch((error) => {
       console.log('error saving analysis', error);
     });
 };
@@ -210,13 +210,13 @@ const storeInstagramData = analyticalLog => {
  * @param {Object} analyticalLog
  * @return {Promise}
  */
-const storeSpotifyData = analyticalLog => {
+const storeSpotifyData = (analyticalLog) => {
   console.log('storeSpotifyData()');
   return SpotifyAnalysis.create({ ...analyticalLog })
-    .then(analysis => {
+    .then((analysis) => {
       console.log('success saving analysis', analysis);
     })
-    .catch(error => {
+    .catch((error) => {
       console.log('error saving analysis', error);
     });
 };
@@ -227,13 +227,13 @@ const storeSpotifyData = analyticalLog => {
  * @param {Object} analyticalLog
  * @return {Promise}
  */
-const storeTwitterData = analyticalLog => {
+const storeTwitterData = (analyticalLog) => {
   console.log('storeTwitterData()');
   return TwitterAnalysis.create({ ...analyticalLog })
-    .then(analysis => {
+    .then((analysis) => {
       console.log('success saving analysis', analysis);
     })
-    .catch(error => {
+    .catch((error) => {
       console.log('error saving analysis', error);
     });
 };
@@ -243,7 +243,7 @@ const storeTwitterData = analyticalLog => {
  * Delegates where the consumer's data should be transported
  * to, based on the specified company, for organization
  * before data storage.
- * @param {string} company
+ * @param {String} company
  * @param {Object} analyticalLog
  * @return {Promise}
  */
@@ -272,13 +272,13 @@ const storeAnalysis = (company, analyticalLog) => {
  * and storing it's results to our database(s).
  * @param {Object} req
  * @param {Object} account
+ * @param {String} company
  * @param {Object} oauthData
- * @param {Object} company
  */
-const gatherAnalytics = (req, account, oauthData, company) => {
-  console.log('gatherAnalytics()');
+const gatherAnalytics = (req, account, company, oauthData) => {
+  console.log('gatherAnalytics():', oauthData);
   Promise.all([analyzeIP(req.ip), gatherWimbAnalytics(req)])
-    .then(pAllResult => {
+    .then((pAllResult) => {
       const analyticalLog = {
         ...oauthData,
         ...pAllResult[0],
@@ -291,7 +291,7 @@ const gatherAnalytics = (req, account, oauthData, company) => {
       };
       storeAnalysis(company, analyticalLog);
     })
-    .catch(error => {
+    .catch((error) => {
       console.log('Promise.all([]) error', error);
     });
 };

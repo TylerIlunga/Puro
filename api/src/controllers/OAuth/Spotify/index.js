@@ -58,14 +58,14 @@ module.exports = {
 
     spotifyApi
       .authorizationCodeGrant(authorizationCode)
-      .then(data => {
+      .then((data) => {
         thisAccessToken = data.body['access_token'];
         thisRefreshToken = data.body['refresh_token'];
         spotifyApi.setAccessToken(thisAccessToken);
         spotifyApi.setRefreshToken(thisRefreshToken);
         return spotifyApi.getMe();
       })
-      .then(async data => {
+      .then(async (data) => {
         if (data.body.product === 'premium') premium = true;
         let spotifyData = data.body;
         if (!spotifyData) {
@@ -78,8 +78,8 @@ module.exports = {
           console.log('entry exists:::::', userEntry);
           return userEntry
             .update({ clicks: userEntry.dataValues.clicks + 1 })
-            .then(result => res.redirect(account.redirect_uri))
-            .catch(error => {
+            .then((result) => res.redirect(account.redirect_uri))
+            .catch((error) => {
               console.log('userEntry.update() error', error);
               return res.redirect(account.redirect_uri);
             });
@@ -89,7 +89,7 @@ module.exports = {
           email: spotifyData.email,
           campaign_id: account.campaign_id,
         })
-          .then(async entry => {
+          .then(async (entry) => {
             console.log('success saving entry', entry);
             res.redirect(account.redirect_uri);
 
@@ -97,10 +97,10 @@ module.exports = {
             //NOTE: Depending on subscription, set limit for top artists[10, 25, 50]??
             spotifyApi
               .getMyTopArtists({ limit: 5 })
-              .then(data => {
+              .then((data) => {
                 let artists = [];
                 if (data.body && data.body.items && spotifyData) {
-                  artists = data.body.items.map(artist => artist.uri);
+                  artists = data.body.items.map((artist) => artist.uri);
                 } else {
                   console.log('NO SPOTIFY BODY');
                 }
@@ -109,35 +109,30 @@ module.exports = {
                 //   return console.log('No user or subscription === free for account: ', account.user_id);
                 // }
                 account['entry_id'] = entry.dataValues.id;
-                gatherAnalytics(
-                  req,
-                  account,
-                  {
-                    access_token: thisAccessToken,
-                    refresh_token: thisRefreshToken,
-                    premiumAccount: premium,
-                    birthdate: spotifyData.birthdate,
-                    country: spotifyData.country,
-                    name: spotifyData.display_name,
-                    email: spotifyData.email,
-                    profile: spotifyData.external_urls.spotify,
-                    followers: spotifyData.followers.total,
-                    product: spotifyData.product,
-                    type: spotifyData.type,
-                    topArtist: artists.length > 0 ? artists[0] : null,
-                  },
-                  'spotify',
-                );
+                gatherAnalytics(req, account, 'spotify', {
+                  access_token: thisAccessToken,
+                  refresh_token: thisRefreshToken,
+                  premiumAccount: premium,
+                  birthdate: spotifyData.birthdate,
+                  country: spotifyData.country,
+                  name: spotifyData.display_name,
+                  email: spotifyData.email,
+                  profile: spotifyData.external_urls.spotify,
+                  followers: spotifyData.followers.total,
+                  product: spotifyData.product,
+                  type: spotifyData.type,
+                  topArtist: artists.length > 0 ? artists[0] : null,
+                });
               })
-              .catch(err =>
+              .catch((err) =>
                 console.log('spotifyApi.getMyTopArtists() err', err),
               );
           })
-          .catch(_ => {
+          .catch((_) => {
             return res.json({ error: 'Error saving entry!', success: false });
           });
       })
-      .catch(err => {
+      .catch((err) => {
         // NOTE: might still redirect to campaign page but email admin account instead
         console.log('Error in spotifyApi pipeline', err.message);
         return res.json({

@@ -58,7 +58,7 @@ module.exports = {
 
     instagram
       .authorizeUser(req.query.code, config.instagram.redirect_uri)
-      .then(async data => {
+      .then(async (data) => {
         console.log('instagram.authorizeUser() data', data);
         instagram = new Instagram({
           clientId: config.instagram.client_id,
@@ -83,8 +83,8 @@ module.exports = {
             console.log('entry exists:::::', userEntry);
             return userEntry
               .update({ clicks: userEntry.dataValues.clicks + 1 })
-              .then(result => res.redirect(account.redirect_uri))
-              .catch(error => {
+              .then((result) => res.redirect(account.redirect_uri))
+              .catch((error) => {
                 console.log('userEntry.update() error', error);
                 // return res.json({ error: "Error updating clicks count!", success: false });
                 return res.redirect(account.redirect_uri);
@@ -95,20 +95,20 @@ module.exports = {
             username: instagramData.username,
             campaign_id: account.campaign_id,
           })
-            .then(async entry => {
+            .then(async (entry) => {
               console.log('success saving entry', entry);
               res.redirect(account.redirect_uri);
               account['entry_id'] = entry.dataValues.id;
-              gatherAnalytics(req, account, instagramData, 'instagram');
+              gatherAnalytics(req, account, 'instagram', instagramData);
             })
-            .catch(error => {
+            .catch((error) => {
               // NOTE: might still redirect to campaign page but email admin account instead
               console.log('success saving entry', entry);
               return res.json({ error: 'Error saving entry.', success: false });
             });
         });
       })
-      .catch(err => {
+      .catch((err) => {
         // NOTE: might still redirect to campaign page but email admin account instead
         console.log('Error in spotifyApi pipeline', err.message);
         return res.json({
