@@ -1,5 +1,7 @@
+/** Expired/Invalid Tokens (Side Project) */
+
 module.exports = {
-  //wimb = whatismybrowser
+  // wimb = whatismybrowser
   wimb: {
     base: process.env.WIMB_BASE || 'https://api.whatismybrowser.com/api/v2',
     auth_header: {

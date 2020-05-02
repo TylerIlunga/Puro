@@ -1,3 +1,5 @@
+/** Expired/Invalid Tokens (Side Project) */
+
 const Mailchimp = require('mailchimp-api-v3');
 const mailchimpAuthToken =
   process.env.MAILCHIMP_AUTH_TOKEN || '3c717ab6988bef4221608095b4b6209b-us20';
