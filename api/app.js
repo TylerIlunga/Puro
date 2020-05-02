@@ -22,7 +22,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(logger('dev'));
 app.use(
   // NOTE: Use https://github.com/roccomuso/memorystore#readme for PROD
-  // Creates session on every request
   eSession({
     name: 'p_sid',
     cookie: { maxAge: oneHour, httpOnly: false },
