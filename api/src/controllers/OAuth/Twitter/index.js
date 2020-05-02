@@ -21,7 +21,6 @@ const db = require('../../../db');
 const Sequelize = db.getClient();
 const Op = Sequelize.Op;
 const Entry = db.Entry;
-const User = db.User;
 
 let account = null;
 
@@ -54,6 +53,8 @@ module.exports = {
   /**
    * oauth[GET]
    * Redirects current user to Twitter's authentication view.
+   * @param {Object} req
+   * @param {Object} res
    */
   oauth(req, res) {
     account = {
@@ -81,6 +82,8 @@ module.exports = {
    * callback[GET]
    * Gathers current user's data allowed by Twitter, organizes that data,
    * and stores it for future analysis.
+   * @param {Object} req
+   * @param {Object} res
    */
   callback(req, res) {
     if (!(account && req.query.oauth_token && req.query.oauth_verifier)) {
@@ -98,7 +101,6 @@ module.exports = {
             success: false,
           });
         }
-        console.log('client.getAccessToken()', results);
         client.verifyCredentials(
           accessToken,
           accessTokenSecret,
@@ -121,13 +123,13 @@ module.exports = {
             });
 
             if (entry) {
-              console.log('entry exists:::::', entry);
+              console.log('Entry exists.', entry);
               return entry
                 .update({ clicks: entry.dataValues.clicks + 1 })
                 .then((_) => res.redirect(account.redirect_uri))
                 .catch((error) => {
                   console.log('entry.update() error', error);
-                  return res.redirect(account.redirect_uri);
+                  res.redirect(account.redirect_uri);
                 });
             }
 
@@ -139,17 +141,18 @@ module.exports = {
             })
               .then(async (entry) => {
                 console.log('success saving entry', entry);
+
                 res.redirect(account.redirect_uri);
-                // const user = await User.findOne({ id: account.user_id });
-                // if (!user || user.subscription === "free") {
-                //   return console.log('No user or subscription === free for account: ', account.user_id);
-                // }
+
                 twitterData['creation'] = twitterData['created_at'];
                 twitterData['created_at'] = null;
                 delete twitterData['created_at'];
                 twitterData['id'] = null;
                 delete twitterData['id'];
-                const analyticalLog = {
+
+                account['entry_id'] = entry.dataValues.id;
+
+                gatherAnalytics(req, account, 'twitter', {
                   ...twitterData,
                   access_token: accessToken,
                   access_token_secret: accessTokenSecret,
@@ -157,9 +160,7 @@ module.exports = {
                   description_url: checkForDescriptionUrl(twitterData.entities),
                   ip: req.ip,
                   link: account.redirect_uri,
-                };
-                account['entry_id'] = entry.dataValues.id;
-                gatherAnalytics(req, account, 'twitter', analyticalLog);
+                });
               })
               .catch((error) => {
                 console.log('Error saving entry:::::', error);
