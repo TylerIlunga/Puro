@@ -53,37 +53,33 @@ module.exports = {
     };
     axios
       .post('https://login.mailchimp.com/oauth2/token', body, meta)
-      .then(response => {
+      .then((response) => {
         if (response.data.error) {
           throw response.data.error;
         }
         const mailchimpTokenData = response.data;
-        console.log('mailchimpTokenData: ', mailchimpTokenData);
-        //{"access_token":"5c6ccc561059aa386da9d112215bae55","expires_in":0,"scope":null}
         LinkedAccount.create({
           access_token: mailchimpTokenData.access_token,
           company: 'Mailchimp',
           user_id: account.user_id,
           expiry_date: mailchimpTokenData.expires_in,
         })
-          .then(result => {
-            console.log('LinkedAccount.create() result', result);
+          .then((_) => {
             account = null;
-            let msg = { success: true, error: false };
-            return res.send(config.broadcastChannel(msg));
+            res.send(config.broadcastChannel({ success: true, error: false }));
           })
-          .catch(error => {
+          .catch((error) => {
             console.log('LinkedAccount.create() error:', error);
             account = null;
-            return res.json({
+            res.json({
               error: 'Error linking account. Contact support.',
               success: false,
             });
           });
       })
-      .catch(error => {
+      .catch((error) => {
         console.log('axios post mailchimp/oauth2/token error:', error);
-        return res.json({
+        res.json({
           error: 'Error linking account. Contact support.',
           success: false,
         });
