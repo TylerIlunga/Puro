@@ -10,7 +10,7 @@ let REGEX_PLUS_SIGN = /\+/g;
 let REGEX_FORWARD_SLASH = /\//g;
 let REGEX_EQUALS_SIGN = /=/g;
 
-/*
+/**
  * This function generates a random amount of bytes using the
  * crypto library
  *
@@ -22,7 +22,7 @@ const generateRandomBytes = function generateRandomBytes(size) {
   return _crypto.randomBytes(size);
 };
 
-/*
+/**
  * This function encodes the given byte buffer into a base64 URL
  * safe string.
  *
@@ -40,7 +40,7 @@ const generateBase64UrlEncodedString = function generateBase64UrlEncodedString(
     .replace(REGEX_EQUALS_SIGN, '');
 };
 
-/*
+/**
  * This function generates the state required for both the
  * OAuth2.0 Authorization and Implicit grant flow
  *
@@ -55,6 +55,11 @@ const generateClientState = (exports.generateClientState = function generateClie
 const snapOAuthState = generateClientState();
 
 module.exports = {
+  /**
+   * oauth [GET]
+   * @param {Object} req
+   * @param {Object} res
+   */
   oauth(req, res) {
     account = {
       campaign_id: req.query.c,
@@ -62,14 +67,18 @@ module.exports = {
       user_id: req.query.a,
       redirect_uri: req.query.r,
     };
-    const redirectLink = `https://accounts.snapchat.com/accounts/oauth2/auth?client_id=${config.snapchat.dev.client_id}&redirect_uri=${config.snapchat.redirect_uri}&response_type=code&scope=${config.snapchat.scope}&state=${snapOAuthState}`;
-    res.redirect(redirectLink);
+    res.redirect(
+      `https://accounts.snapchat.com/accounts/oauth2/auth?client_id=${config.snapchat.dev.client_id}&redirect_uri=${config.snapchat.redirect_uri}&response_type=code&scope=${config.snapchat.scope}&state=${snapOAuthState}`,
+    );
   },
+  /**
+   * callback [GET]
+   * @param {Object} req
+   * @param {Object} res
+   */
   callback(req, res) {
-    console.log('req.query:', req.query);
     if (!(req.query && req.query.state && req.query.state === snapOAuthState)) {
       console.log('invalid callback');
-      // res.redirect(account.redirect_uri);
       return res.json({ fail: true });
     }
 
@@ -81,29 +90,20 @@ module.exports = {
       'base64',
     );
     const body = `grant_type=authorization_code&client_id=${config.snapchat.dev.client_id}&redirect_uri=${config.snapchat.redirect_uri}&code=${req.query.code}`;
-    const meta0 = {
+    let meta = {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         Authorization: 'Basic ' + authorizationHeaderBase64,
       },
     };
+
     axios
-      .post(SNAPCHAT_AUTH_ENDPOINT, body, meta0)
-      .then(response => {
-        // Error Response Body
-        // {
-        //     error: <ascii error code>,
-        //     error_description: <human readable error description>
-        // }
+      .post(SNAPCHAT_AUTH_ENDPOINT, body, meta)
+      .then((response) => {
         if (response.data.error) {
           throw response.data.error_description;
         }
-        // Successful response
-        // {
-        //     access_token: <string>,
-        //     refresh_token: <string>,
-        //     expires_in: <time in seconds>
-        // }
+
         const profileFields = ['id', 'displayName', 'bitmoji'];
         const profileUrl = 'https://kit.snapchat.com/v1/me';
         const parsedUri = uri.parse(profileUrl);
@@ -117,25 +117,24 @@ module.exports = {
           : query;
         // Format the uri to be a string
         const url = String(uri.format(parsedUri));
-        console.log('url', url);
-        const body1 = `grant_type=code&client_id=${config.snapchat.dev.client_id}&client_secret=${config.snapchat.dev.client_secret}&access_token=${response.data.access_token}`;
-        const meta1 = {
+
+        meta = {
           headers: {
             Authorization: 'BEARER ' + response.data.access_token,
           },
         };
+
         axios
-          .get(url, meta1)
-          .then(profile => res.json({ profile }))
-          .catch(err => {
+          .get(url, meta)
+          .then((profile) => res.json({ profile }))
+          .catch((err) => {
             throw err;
           });
       })
-      .catch(error => {
-        console.log('axios.post(SNAPCHAT_AUTH_ENDPOINT error:', error);
+      .catch((error) => {
+        console.log('axios.post (SNAPCHAT_AUTH_ENDPOINT) error:', error);
         console.log('invalid callback');
-        // res.redirect(account.redirect_uri);
-        return res.json({ fail: true });
+        res.json({ fail: true });
       });
   },
 };
