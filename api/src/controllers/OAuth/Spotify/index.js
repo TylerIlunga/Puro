@@ -8,7 +8,7 @@
  *                   oauth()
  *                   callback()
  *
- *  Notes         :  2
+ *  Notes         :  1
  *  Warnings      :  None
  *  Exceptions    :  N/A
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -29,7 +29,8 @@ let account = null;
 module.exports = {
   /**
    * oauth[GET]
-   * Redirects current user to Spotify's authentication view.
+   * @param {Object} req
+   * @param {Object} res
    */
   oauth(req, res) {
     account = {
@@ -44,8 +45,8 @@ module.exports = {
   },
   /**
    * callback[GET]
-   * Gathers current user's data allowed by Spotify, organizes that data,
-   * and stores it for future analysis.
+   * @param {Object} req
+   * @param {Object} res
    */
   callback(req, res) {
     if (!account) {
@@ -66,7 +67,9 @@ module.exports = {
         return spotifyApi.getMe();
       })
       .then(async (data) => {
-        if (data.body.product === 'premium') premium = true;
+        if (data.body.product === 'premium') {
+          premium = true;
+        }
         let spotifyData = data.body;
         if (!spotifyData) {
           console.log('No spotifyData');
@@ -75,13 +78,13 @@ module.exports = {
           where: { company_id: spotifyData.id },
         });
         if (userEntry) {
-          console.log('entry exists:::::', userEntry);
+          console.log('Entry exist.');
           return userEntry
             .update({ clicks: userEntry.dataValues.clicks + 1 })
-            .then((result) => res.redirect(account.redirect_uri))
+            .then((_) => res.redirect(account.redirect_uri))
             .catch((error) => {
               console.log('userEntry.update() error', error);
-              return res.redirect(account.redirect_uri);
+              res.redirect(account.redirect_uri);
             });
         }
         Entry.create({
@@ -91,10 +94,12 @@ module.exports = {
         })
           .then(async (entry) => {
             console.log('success saving entry', entry);
+
             res.redirect(account.redirect_uri);
 
             spotifyApi.setAccessToken(thisAccessToken);
-            //NOTE: Depending on subscription, set limit for top artists[10, 25, 50]??
+            // NOTE: Depending on subscription, setting limit for top artists might
+            // not be a bad idea
             spotifyApi
               .getMyTopArtists({ limit: 5 })
               .then((data) => {
@@ -102,13 +107,11 @@ module.exports = {
                 if (data.body && data.body.items && spotifyData) {
                   artists = data.body.items.map((artist) => artist.uri);
                 } else {
-                  console.log('NO SPOTIFY BODY');
+                  console.log('NO SPOTIFY DATA for (getMyTopArtists)');
                 }
-                // const user = await User.findOne({ id: account.user_id });
-                // if (!user || user.subscription === "free") {
-                //   return console.log('No user or subscription === free for account: ', account.user_id);
-                // }
+
                 account['entry_id'] = entry.dataValues.id;
+
                 gatherAnalytics(req, account, 'spotify', {
                   access_token: thisAccessToken,
                   refresh_token: thisRefreshToken,
@@ -129,11 +132,10 @@ module.exports = {
               );
           })
           .catch((_) => {
-            return res.json({ error: 'Error saving entry!', success: false });
+            res.json({ error: 'Error saving entry!', success: false });
           });
       })
       .catch((err) => {
-        // NOTE: might still redirect to campaign page but email admin account instead
         console.log('Error in spotifyApi pipeline', err.message);
         return res.json({
           error: 'Error gathering spotify data',

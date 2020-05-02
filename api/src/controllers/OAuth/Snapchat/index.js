@@ -1,3 +1,21 @@
+/** ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *  File name     :  ./controllers/OAuth/Snapchat
+ *  Purpose       :  Module for the Snapchat OAuth service.
+ *  Author        :  Tyler Ilunga
+ *  Date          :  2020-05-01
+ *  Description   :  Module that holds all of the services for "Snapchat" Oauth.
+ *                   Includes the following:
+ *                   generateRandomBytes()
+ *                   generateBase64UrlEncodedString()
+ *                   generateClientState()
+ *                   oauth()
+ *                   callback()
+ *
+ *  Notes         :  0
+ *  Warnings      :  None
+ *  Exceptions    :  N/A
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
 const axios = require('axios');
 const _crypto = require('crypto');
 const uri = require('url');
