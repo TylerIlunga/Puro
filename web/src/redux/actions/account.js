@@ -3,7 +3,7 @@ import { CLEAR_USER, UPDATE_USER, UPDATE_USER_TFA_STATUS } from '../constants';
 
 const AuthService = new Auth();
 
-export const updateUser = user => {
+export const updateUser = (user) => {
   return {
     type: UPDATE_USER,
     id: user.id,
@@ -18,8 +18,8 @@ export const clearUser = () => {
   return { type: CLEAR_USER };
 };
 
-export const retrieveAccount = cb => {
-  return dispatch => {
+export const retrieveAccount = (cb) => {
+  return (dispatch) => {
     return AuthService.retrieveAccount()
       .then(({ error, user }) => {
         if (error) {
@@ -28,14 +28,14 @@ export const retrieveAccount = cb => {
         cb(null);
         dispatch(updateUser(user));
       })
-      .catch(error => {
-        console.log('error', error);
+      .catch((error) => {
+        console.log('error: ', error);
         cb(error);
       });
   };
 };
 
-export const updateUserTFAStatus = two_factor_enabled => {
+export const updateUserTFAStatus = (two_factor_enabled) => {
   return {
     type: UPDATE_USER_TFA_STATUS,
     two_factor_enabled,

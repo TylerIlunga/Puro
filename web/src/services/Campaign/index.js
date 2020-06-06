@@ -22,7 +22,6 @@ export default class CampaignService {
     type,
     uid,
   }) {
-    console.log('create() type', type);
     if (type === 'link') {
       return this.AuthService.fetch(`/api/campaign/create?uid=${uid}`, {
         method: 'POST',
@@ -41,10 +40,10 @@ export default class CampaignService {
         avatar,
         questions,
         redirect_uri,
-        theme: theme.fieldId.split('_')[0],
         title,
         type: `p_${type}`,
         company: company.toLowerCase(),
+        theme: theme.fieldId.split('_')[0],
       }),
     });
   }
@@ -64,7 +63,7 @@ export default class CampaignService {
     );
   }
 
-  exportToGoogleDrive({ domain, uid, id, title, type }) {
+  exportToGoogleDrive({ uid, id, title, type }) {
     return this.AuthService.fetch(
       `/api/campaign/export?uid=${uid}&id=${id}&title=${title}&type=${type}`,
     );
@@ -86,9 +85,9 @@ export default class CampaignService {
         credentials: 'include',
       },
     )
-      .then(this._checkStatus)
-      .then(response => response.blob())
-      .catch(err => err);
+      .then(this.AuthService._checkStatus)
+      .then((response) => response.blob())
+      .catch((err) => err);
   }
 
   export({ userId, campaignId, title, type }) {
@@ -112,17 +111,5 @@ export default class CampaignService {
     return this.AuthService.fetch(`/api/campaign/delete?id=${id}&uid=${uid}`, {
       method: 'DELETE',
     });
-  }
-
-  _checkStatus(response) {
-    // raises an error in case response status is not a success
-    if (response.status >= 200 && response.status < 300) {
-      // Success status lies between 200 to 300
-      return response;
-    } else {
-      var error = new Error(response.statusText);
-      error.response = response;
-      throw error;
-    }
   }
 }

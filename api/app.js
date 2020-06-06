@@ -11,12 +11,13 @@ const sessionStore = new eSession.MemoryStore();
 const oneHour = new Date().getTime() + 60 * 60 * 1000;
 
 app.use(cookieParser(jwt.J_SECRET));
-app.use(
-  cors({
-    credentials: true,
-    origin: ['http://127.0.0.1:3000'],
-  }),
-);
+// app.use(
+//   cors({
+//     credentials: true,
+//     origin: ['http://127.0.0.1:1111'],
+//   }),
+// );
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(logger('dev'));

@@ -3,7 +3,6 @@ import { CLEAR_USER, UPDATE_USER, UPDATE_USER_TFA_STATUS } from '../constants';
 export default (state = {}, action) => {
   switch (action.type) {
     case UPDATE_USER:
-      console.log('accountReducer() UPDATE_USER');
       return {
         ...state,
         user: {

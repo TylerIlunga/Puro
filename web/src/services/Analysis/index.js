@@ -6,13 +6,10 @@ export default class AnalysisService {
   }
 
   general(userId) {
-    console.log('general() userId', userId);
     return this.AuthService.fetch(`/api/analysis/general?uid=${userId}`);
   }
 
   fetch({ cid, company, plan, uid }) {
-    console.log('fetch() cid', cid);
-    console.log('fetch() company', company);
     return this.AuthService.fetch(
       `/api/analysis/fetch?cid=${cid}&company=${company}&plan=${plan}&uid=${uid}`,
     );

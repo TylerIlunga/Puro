@@ -18,28 +18,21 @@ import ResetPassword from '../Auth/ResetPassword';
 import Dashboard from '../Dashboard';
 import Error from '../Error';
 
-// DEF: Protected Route
-// 1) Does session id (p_sid) exist?
-// 2) Does user_token exists?
-
 const handleProtectedRoutes = (history, props, Component) => {
   const cookies = props.cookies;
-  console.log('handleProtectedRoutes() cookies', cookies);
-  // NOTE: Need to handle updating user redux object.
-  console.log('handleProtectedRoutes() history', history);
   if (!(cookies && cookies.get('user_token'))) {
     window.localStorage.removeItem('user_token');
-    return <Component {...history} />; //change to SignUp
+    return <Component {...history} />;
   }
   return <Dashboard {...history} />;
 };
 
-const handleCloseModal = props => {
+const handleCloseModal = (props) => {
   props.clearModal();
   window.$('#infoModal').modal('hide');
 };
 
-const renderInfoModal = props => {
+const renderInfoModal = (props) => {
   return (
     <div
       className='modal fade'
@@ -72,40 +65,39 @@ const renderInfoModal = props => {
   );
 };
 
-const Router = props => {
-  console.log('Router', props);
+const Router = (props) => {
   return (
     <ConnectedRouter history={history}>
       <div className='main'>
         <Switch>
           <Route
             path='/'
-            component={h => handleProtectedRoutes(h, props, Landing)}
+            component={(h) => handleProtectedRoutes(h, props, Landing)}
             exact
           />
           <Route
             path='/login'
-            component={h => handleProtectedRoutes(h, props, LogIn)}
+            component={(h) => handleProtectedRoutes(h, props, LogIn)}
           />
           <Route
             path='/signup'
-            component={h => handleProtectedRoutes(h, props, SignUp)}
+            component={(h) => handleProtectedRoutes(h, props, SignUp)}
           />
           <Route
             path='/confirm'
-            component={h => handleProtectedRoutes(h, props, Confirm)}
+            component={(h) => handleProtectedRoutes(h, props, Confirm)}
           />
           <Route
             path='/forgot'
-            component={h => handleProtectedRoutes(h, props, ForgotPassword)}
+            component={(h) => handleProtectedRoutes(h, props, ForgotPassword)}
           />
           <Route
             path='/reset'
-            component={h => handleProtectedRoutes(h, props, ResetPassword)}
+            component={(h) => handleProtectedRoutes(h, props, ResetPassword)}
           />
           <Route
             path='/dashboard*'
-            component={h => handleProtectedRoutes(h, props, SignUp)}
+            component={(h) => handleProtectedRoutes(h, props, SignUp)}
           />
           <Route component={Error} />
         </Switch>
@@ -115,12 +107,12 @@ const Router = props => {
   );
 };
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   modal: state.modal,
   user: state.account.user,
 });
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch) => ({
   clearUser: () => dispatch(clearUser()),
   clearModal: () => dispatch(clearModal()),
 });

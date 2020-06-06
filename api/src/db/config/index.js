@@ -36,17 +36,22 @@ module.exports = {
     return uuidv4();
   },
   genPassword(password) {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       bcrypt.genSalt(10, (err, salt) => {
         if (err) {
           return reject(err);
         }
-        bcrypt.hash(password, salt, (err, hash) => {
-          if (err) {
-            return reject(err);
-          }
-          return resolve(hash);
-        });
+        bcrypt.hash(
+          password,
+          salt,
+          (process) => {},
+          (err, hash) => {
+            if (err) {
+              return reject(err);
+            }
+            return resolve(hash);
+          },
+        );
       });
     });
   },

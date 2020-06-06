@@ -1,11 +1,10 @@
 import config from '../../config';
 
 export default class Auth {
-  // Initializing important variables
   constructor() {
     this.localStorage = window.localStorage;
-    // console.log('this.localStorage', this.localStorage);
-    this.domain = config.api_domain;
+    // this.domain = config.api_domain;
+    this.domain = 'http://127.0.0.1:1111';
     this.fetch = this.fetch.bind(this);
     this.login = this.login.bind(this);
   }
@@ -15,7 +14,6 @@ export default class Auth {
   }
 
   fetch(endpoint, options = {}) {
-    // performs api calls sending the required authentication headers
     const headers = {
       'Access-Control-Allow-Origin': this.domain,
       Accept: 'application/json',
@@ -29,14 +27,12 @@ export default class Auth {
       headers,
     })
       .then(this._checkStatus)
-      .then(response => response.json())
-      .catch(err => err);
+      .then((response) => response.json())
+      .catch((err) => err);
   }
 
   _checkStatus(response) {
-    // raises an error in case response status is not a success
     if (response.status >= 200 && response.status < 300) {
-      // Success status lies between 200 to 300
       return response;
     } else {
       var error = new Error(response.statusText);
@@ -46,31 +42,21 @@ export default class Auth {
   }
 
   setToken(token) {
-    // Saves user token to this.localStorage
-    // NOTE: get if "" is returned instead of "".
-    // if (this.getToken()) return;
     this.localStorage.setItem('user_token', token);
   }
 
   getToken() {
-    // Retrieves the user token from this.localStorage
     return this.localStorage.getItem('user_token');
   }
 
   retrieveAccount() {
-    console.log('retrieving account');
     const token = this.getToken();
     return this.fetch(`/api/account/retrieve?token=${token}`)
-      .then(res => {
-        console.log('retrieveAccount RESPONSE', res);
-        return Promise.resolve(res);
-      })
-      .catch(err => Promise.reject(err));
+      .then((res) => Promise.resolve(res))
+      .catch((err) => Promise.reject(err));
   }
 
   login({ email, password }) {
-    console.log('logging in ' + email, password);
-    // Get a token from api server using the fetch api
     return this.fetch('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({
@@ -78,23 +64,20 @@ export default class Auth {
         password,
       }),
     })
-      .then(res => {
-        console.log('login RESPONSE', res);
+      .then((res) => {
         if (!res.error && res.token) this.setToken(res.token);
         return Promise.resolve(res);
       })
-      .catch(err => Promise.reject(err));
+      .catch((err) => Promise.reject(err));
   }
 
   handleTFA({ token }) {
-    console.log('handleTFA() token', token);
     return this.fetch(`/api/auth/handleTFA?token=${token}`)
-      .then(res => {
-        console.log('handleTFA RESPONSE', res);
+      .then((res) => {
         if (!res.error && res.token) this.setToken(res.token);
         return Promise.resolve(res);
       })
-      .catch(err => Promise.reject(err));
+      .catch((err) => Promise.reject(err));
   }
 
   signUp({ email, password, business }) {
@@ -106,20 +89,14 @@ export default class Auth {
         business,
       }),
     })
-      .then(res => {
-        console.log('signUp RESPONSE', res);
-        return Promise.resolve(res);
-      })
-      .catch(err => Promise.reject(err));
+      .then((res) => Promise.resolve(res))
+      .catch((err) => Promise.reject(err));
   }
 
   verifyAccount({ email, token }) {
     return this.fetch(`/api/auth/verify?email=${email}&token=${token}`)
-      .then(res => {
-        console.log('verifyAccount RESPONSE', res);
-        return Promise.resolve(res);
-      })
-      .catch(err => Promise.reject(err));
+      .then((res) => Promise.resolve(res))
+      .catch((err) => Promise.reject(err));
   }
 
   forgotPassword({ email }) {
@@ -127,11 +104,8 @@ export default class Auth {
       method: 'POST',
       body: JSON.stringify({ email }),
     })
-      .then(res => {
-        console.log('forgotPassword RESPONSE', res);
-        return Promise.resolve(res);
-      })
-      .catch(err => Promise.reject(err));
+      .then((res) => Promise.resolve(res))
+      .catch((err) => Promise.reject(err));
   }
 
   resetPassword({ email, token, newPassword }) {
@@ -143,22 +117,17 @@ export default class Auth {
         newPassword,
       }),
     })
-      .then(res => {
-        console.log('resetPassword RESPONSE', res);
-        return Promise.resolve(res);
-      })
-      .catch(err => Promise.reject(err));
+      .then((res) => Promise.resolve(res))
+      .catch((err) => Promise.reject(err));
   }
 
   logout() {
     return this.fetch('/api/auth/logout')
-      .then(res => {
-        console.log('LOGOUT RESPONSE', res);
-        // Clear user token and profile data from this.localStorage
+      .then((res) => {
         this.localStorage.removeItem('user_token');
         return Promise.resolve(res);
       })
-      .catch(err => Promise.reject(err));
+      .catch((err) => Promise.reject(err));
   }
 
   deleteAccount({ id, email, password }) {
@@ -166,10 +135,7 @@ export default class Auth {
       method: 'DELETE',
       body: JSON.stringify({ password }),
     })
-      .then(res => {
-        console.log('SIGNUP RESPONSE', res);
-        return Promise.resolve(res);
-      })
-      .catch(err => Promise.reject(err));
+      .then((res) => Promise.resolve(res))
+      .catch((err) => Promise.reject(err));
   }
 }

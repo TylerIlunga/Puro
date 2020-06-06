@@ -64,7 +64,7 @@ module.exports = {
     if (!(req.headers.api_key && req.headers.api_key.indexOf('OHM') > -1)) {
       return res.json({ error: 'Missing key', success: false });
     }
-    if (req.headers.api_key.split(' ')[1] !== API_KEY) {
+    if (req.headers.api_key.split(' ')[1] !== config.API_KEY) {
       return res.json({ error: 'Invalid key', success: false });
     }
     next();
