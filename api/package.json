@@ -27,7 +27,7 @@
     "express": "^4.16.4",
     "express-session": "^1.15.6",
     "fb": "^2.0.0",
-    "googleapis": "^38.0.0",
+    "googleapis": "^59.0.0",
     "ip2countrify": "^0.2.0",
     "json2csv": "^4.4.1",
     "jsonwebtoken": "^8.4.0",
